@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Youtube } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
+import { FileUpload } from '@/components/FileUpload';
 
 const YouTubeUploader = () => {
   const { session, loading, supabase } = useSupabaseAuth();
@@ -26,19 +27,23 @@ const YouTubeUploader = () => {
         .eq('id', session.user.id)
         .single();
 
-      if (error) throw error;
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
       
       if (data?.youtube_access_token) {
         setIsConnected(true);
       } else {
-        // If tokens are in the session but not in the profile, store them.
         if (session.provider_token) {
           await storeTokens();
+        } else {
+          setIsConnected(false);
         }
       }
     } catch (error) {
       console.error('Error checking YouTube connection status:', error);
       showError('Could not verify YouTube connection.');
+      setIsConnected(false);
     } finally {
       setIsCheckingStatus(false);
     }
@@ -107,23 +112,14 @@ const YouTubeUploader = () => {
             Logout
           </Button>
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {isConnected ? 'Upload Your Video' : 'Connect to YouTube'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isConnected ? (
-              <div>
-                <p className="text-center text-green-600 dark:text-green-400 mb-4">
-                  Successfully connected to YouTube!
-                </p>
-                <p className="text-center text-gray-600 dark:text-gray-400">
-                  The file upload component will be added here next.
-                </p>
-              </div>
-            ) : (
+        {isConnected ? (
+          <FileUpload />
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Connect to YouTube</CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="text-center">
                 <p className="mb-4 text-gray-700 dark:text-gray-300">
                   To upload videos, you need to connect your YouTube account.
@@ -137,9 +133,9 @@ const YouTubeUploader = () => {
                   {isConnecting ? 'Redirecting...' : 'Connect with YouTube'}
                 </Button>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
       <MadeWithDyad />
     </div>
