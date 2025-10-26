@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const QrGenerator = () => {
   const qrRef = useRef<HTMLDivElement>(null);
@@ -64,12 +65,18 @@ const QrGenerator = () => {
     <div className="w-full max-w-5xl mx-auto">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">QR Generator</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-6">
+          <Tabs defaultValue="style" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="style">Style</TabsTrigger>
+              <TabsTrigger value="logo">Logo</TabsTrigger>
+              <TabsTrigger value="download">Download</TabsTrigger>
+            </TabsList>
+            <TabsContent value="style" className="space-y-6 mt-6">
               <Card>
                   <CardHeader>
-                      <CardTitle>QR Code Content</CardTitle>
+                      <CardTitle>Content & Style</CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="space-y-4">
                       <div className="space-y-2">
                           <Label htmlFor="url">URL</Label>
                           <Input 
@@ -79,13 +86,6 @@ const QrGenerator = () => {
                               placeholder="https://example.com"
                           />
                       </div>
-                  </CardContent>
-              </Card>
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Customization</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
                       <div className="space-y-2">
                           <Label>Size: {size}px</Label>
                           <Slider value={[size]} onValueChange={(v) => setSize(v[0])} min={64} max={1024} step={8} />
@@ -114,6 +114,8 @@ const QrGenerator = () => {
                       </div>
                   </CardContent>
               </Card>
+            </TabsContent>
+            <TabsContent value="logo" className="mt-6">
                <Card>
                   <CardHeader>
                       <CardTitle>Logo</CardTitle>
@@ -137,6 +139,8 @@ const QrGenerator = () => {
                       )}
                   </CardContent>
               </Card>
+            </TabsContent>
+            <TabsContent value="download" className="mt-6">
               <Card>
                   <CardHeader>
                       <CardTitle>Download</CardTitle>
@@ -156,8 +160,9 @@ const QrGenerator = () => {
                       <Button onClick={handleDownload} className="w-full">Download QR Code</Button>
                   </CardContent>
               </Card>
-          </div>
-          <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            </TabsContent>
+          </Tabs>
+          <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-700 rounded-lg p-4 h-full min-h-[400px]">
               <div ref={qrRef}>
                   <QRCodeCanvas 
                       value={url} 
