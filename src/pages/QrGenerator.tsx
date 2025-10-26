@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const QrGenerator = () => {
   const { session, loading, supabase } = useSupabaseAuth();
@@ -28,6 +29,11 @@ const QrGenerator = () => {
   const [bgColor, setBgColor] = useState('#ffffff');
   const [level, setLevel] = useState<'L' | 'M' | 'Q' | 'H'>('L');
   const [imageFormat, setImageFormat] = useState('png');
+
+  // State for logo
+  const [logoImage, setLogoImage] = useState<string | undefined>(undefined);
+  const [logoScale, setLogoScale] = useState(0.25);
+  const [excavate, setExcavate] = useState(true);
 
   if (loading) {
     return (
@@ -62,9 +68,27 @@ const QrGenerator = () => {
     }
   };
 
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setLogoImage(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    }
+  };
+
+  const imageSettings = logoImage ? {
+    src: logoImage,
+    height: size * logoScale,
+    width: size * logoScale,
+    excavate: excavate,
+  } : undefined;
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
-      <div className="w-full max-w-4xl bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
+      <div className="w-full max-w-5xl bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
         <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">FlexQR Generator</h1>
             <Button onClick={handleLogout} variant="destructive">
@@ -97,50 +121,53 @@ const QrGenerator = () => {
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
                             <Label>Size: {size}px</Label>
-                            <Slider
-                                value={[size]}
-                                onValueChange={(value) => setSize(value[0])}
-                                min={64}
-                                max={1024}
-                                step={8}
-                            />
+                            <Slider value={[size]} onValueChange={(v) => setSize(v[0])} min={64} max={1024} step={8} />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="fgColor">Foreground Color</Label>
-                                <Input 
-                                    id="fgColor"
-                                    type="color"
-                                    value={fgColor}
-                                    onChange={(e) => setFgColor(e.target.value)}
-                                    className="p-1 h-10 w-full"
-                                />
+                                <Label htmlFor="fgColor">Foreground</Label>
+                                <Input id="fgColor" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-1 h-10 w-full" />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="bgColor">Background Color</Label>
-                                <Input 
-                                    id="bgColor"
-                                    type="color"
-                                    value={bgColor}
-                                    onChange={(e) => setBgColor(e.target.value)}
-                                    className="p-1 h-10 w-full"
-                                />
+                                <Label htmlFor="bgColor">Background</Label>
+                                <Input id="bgColor" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-1 h-10 w-full" />
                             </div>
                         </div>
                         <div className="space-y-2">
                             <Label>Error Correction</Label>
-                            <Select onValueChange={(value: 'L' | 'M' | 'Q' | 'H') => setLevel(value)} defaultValue={level}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select level" />
-                                </SelectTrigger>
+                            <Select onValueChange={(v: 'L'|'M'|'Q'|'H') => setLevel(v)} defaultValue={level}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="L">Low (L)</SelectItem>
-                                    <SelectItem value="M">Medium (M)</SelectItem>
-                                    <SelectItem value="Q">Quartile (Q)</SelectItem>
-                                    <SelectItem value="H">High (H)</SelectItem>
+                                    <SelectItem value="L">Low</SelectItem>
+                                    <SelectItem value="M">Medium</SelectItem>
+                                    <SelectItem value="Q">Quartile</SelectItem>
+                                    <SelectItem value="H">High</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Logo</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="logo">Upload Logo</Label>
+                            <Input id="logo" type="file" accept="image/*" onChange={handleLogoUpload} />
+                        </div>
+                        {logoImage && (
+                            <>
+                                <div className="space-y-2">
+                                    <Label>Logo Scale: {Math.round(logoScale * 100)}%</Label>
+                                    <Slider value={[logoScale]} onValueChange={(v) => setLogoScale(v[0])} min={0.1} max={0.4} step={0.01} />
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox id="excavate" checked={excavate} onCheckedChange={(checked) => setExcavate(!!checked)} />
+                                    <Label htmlFor="excavate">Clear space for logo</Label>
+                                </div>
+                            </>
+                        )}
                     </CardContent>
                 </Card>
                 <Card>
@@ -150,10 +177,8 @@ const QrGenerator = () => {
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
                             <Label>Image Format</Label>
-                            <Select onValueChange={(value: 'png' | 'jpeg' | 'webp') => setImageFormat(value)} defaultValue={imageFormat}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select format" />
-                                </SelectTrigger>
+                            <Select onValueChange={(v: 'png'|'jpeg'|'webp') => setImageFormat(v)} defaultValue={imageFormat}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="png">PNG</SelectItem>
                                     <SelectItem value="jpeg">JPEG</SelectItem>
@@ -161,9 +186,7 @@ const QrGenerator = () => {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <Button onClick={handleDownload} className="w-full">
-                            Download QR Code
-                        </Button>
+                        <Button onClick={handleDownload} className="w-full">Download QR Code</Button>
                     </CardContent>
                 </Card>
             </div>
@@ -175,6 +198,7 @@ const QrGenerator = () => {
                         fgColor={fgColor}
                         bgColor={bgColor}
                         level={level}
+                        imageSettings={imageSettings}
                     />
                 </div>
             </div>
