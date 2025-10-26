@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
-import YouTubeUploader from "./pages/YouTubeUploader";
+import QrGenerator from "./pages/QrGenerator";
 import { SupabaseAuthContextProvider } from "./contexts/SupabaseAuthContext";
 
 const queryClient = new QueryClient();
@@ -21,7 +21,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/youtube-uploader" element={<YouTubeUploader />} />
+            <Route path="/qr-generator" element={<QrGenerator />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

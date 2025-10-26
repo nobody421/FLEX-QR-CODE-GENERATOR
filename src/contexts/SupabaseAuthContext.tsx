@@ -23,9 +23,9 @@ export const SupabaseAuthContextProvider: React.FC<{ children: React.ReactNode }
         setLoading(false);
 
         if (event === 'SIGNED_IN' && currentSession) {
-          // Redirect authenticated users from login to the uploader
+          // Redirect authenticated users from login to the generator
           if (window.location.pathname === '/login') {
-            navigate('/youtube-uploader');
+            navigate('/qr-generator');
           }
         } else if (event === 'SIGNED_OUT') {
           // Redirect unauthenticated users to login
@@ -40,7 +40,7 @@ export const SupabaseAuthContextProvider: React.FC<{ children: React.ReactNode }
       if (!session && window.location.pathname !== '/login') {
         navigate('/login');
       } else if (session && window.location.pathname === '/login') {
-        navigate('/youtube-uploader');
+        navigate('/qr-generator');
       }
     });
 

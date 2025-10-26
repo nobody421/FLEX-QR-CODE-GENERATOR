@@ -10,7 +10,7 @@ const Index = () => {
   useEffect(() => {
     if (!loading) {
       if (session) {
-        navigate("/youtube-uploader");
+        navigate("/qr-generator");
       } else {
         navigate("/login");
       }
@@ -28,7 +28,7 @@ const Index = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
       <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">Welcome</h1>
+        <h1 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">Welcome to FlexQR</h1>
         <p className="text-xl text-gray-600 dark:text-gray-400">
           Redirecting...
         </p>
