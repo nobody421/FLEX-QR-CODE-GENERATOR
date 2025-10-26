@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { MadeWithDyad } from '@/components/made-with-dyad';
 import { useSupabaseAuth } from '@/contexts/SupabaseAuthContext';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,7 @@ import {
 const QrGenerator = () => {
   const { session, loading, supabase } = useSupabaseAuth();
   const navigate = useNavigate();
+  const qrRef = useRef<HTMLDivElement>(null);
   
   // State for QR code content and customization
   const [url, setUrl] = useState('https://www.dyad.sh');
@@ -26,6 +27,7 @@ const QrGenerator = () => {
   const [fgColor, setFgColor] = useState('#000000');
   const [bgColor, setBgColor] = useState('#ffffff');
   const [level, setLevel] = useState<'L' | 'M' | 'Q' | 'H'>('L');
+  const [imageFormat, setImageFormat] = useState('png');
 
   if (loading) {
     return (
@@ -43,6 +45,21 @@ const QrGenerator = () => {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate('/login');
+  };
+
+  const handleDownload = () => {
+    if (qrRef.current) {
+      const canvas = qrRef.current.querySelector('canvas');
+      if (canvas) {
+        const image = canvas.toDataURL(`image/${imageFormat}`);
+        const link = document.createElement('a');
+        link.href = image;
+        link.download = `flexqr-code.${imageFormat}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    }
   };
 
   return (
@@ -126,9 +143,32 @@ const QrGenerator = () => {
                         </div>
                     </CardContent>
                 </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Download</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Image Format</Label>
+                            <Select onValueChange={(value: 'png' | 'jpeg' | 'webp') => setImageFormat(value)} defaultValue={imageFormat}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select format" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="png">PNG</SelectItem>
+                                    <SelectItem value="jpeg">JPEG</SelectItem>
+                                    <SelectItem value="webp">WEBP</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <Button onClick={handleDownload} className="w-full">
+                            Download QR Code
+                        </Button>
+                    </CardContent>
+                </Card>
             </div>
             <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                <Card className="p-4" style={{ backgroundColor: bgColor }}>
+                <div ref={qrRef}>
                     <QRCodeCanvas 
                         value={url} 
                         size={size}
@@ -136,7 +176,7 @@ const QrGenerator = () => {
                         bgColor={bgColor}
                         level={level}
                     />
-                </Card>
+                </div>
             </div>
         </div>
       </div>
