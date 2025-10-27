@@ -3,8 +3,8 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
 // IMPORTANT: This function now requires a GEMINI_API_TOKEN secret to be set in your Supabase project.
 const GEMINI_API_TOKEN = Deno.env.get("GEMINI_API_TOKEN")
-// Note: The specialized ControlNet QR generation model used previously (Replicate) is not directly available via standard Gemini APIs.
-// This implementation attempts a generic image generation call, which may not produce scannable QR codes.
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -39,7 +39,6 @@ serve(async (req) => {
     const fullPrompt = `Generate a highly stylized image based on the following description: "${prompt}". The image must subtly incorporate the visual structure of a QR code that encodes the data: "${qr_data}".`;
 
     // 1. Call Gemini/Imagen API
-    // Using a simplified structure for the Imagen API endpoint.
     const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:generateImages?key=${GEMINI_API_TOKEN}`, {
       method: "POST",
       headers: {
@@ -66,15 +65,64 @@ serve(async (req) => {
       });
     }
 
-    // 2. Handle output: Imagen typically returns base64 encoded images.
-    // Since we cannot easily upload base64 to Supabase Storage and return a public URL in this single function call,
-    // we must inform the user that further steps are needed for a complete solution.
-    
-    return new Response(JSON.stringify({ error: "Gemini image generation succeeded, but the output (base64 image) requires an additional step (e.g., uploading to Supabase Storage) to generate a public URL for display. This specialized QR functionality is complex to implement with generic APIs." }), {
+    // 2. Handle output: Upload base64 image to Supabase Storage
+    if (!geminiResult?.data?.length) {
+      return new Response(JSON.stringify({ error: "No image data returned from Gemini API." }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const base64Image = geminiResult.data[0].b64_json;
+    if (!base64Image) {
+      return new Response(JSON.stringify({ error: "No base64 image data returned from Gemini API." }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Create Supabase client with service role key for storage access
+    const supabaseAdmin = createClient(SUPABASE_URL ?? '', SUPABASE_SERVICE_ROLE_KEY ?? '', {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false
+      }
     });
 
+    // Create a unique filename
+    const fileName = `ai-qr-${Date.now()}-${Math.random().toString(36).substring(2, 15)}.png`;
+    
+    // Convert base64 to Uint8Array
+    const imageBytes = Uint8Array.from(atob(base64Image), c => c.charCodeAt(0));
+    
+    // Upload to Supabase Storage
+    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+      .from('ai-qr-codes')
+      .upload(fileName, imageBytes, {
+        contentType: 'image/png',
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error("Storage upload error:", uploadError);
+      return new Response(JSON.stringify({ error: "Failed to upload image to storage." }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Get public URL
+    const { data: publicUrlData } = supabaseAdmin.storage
+      .from('ai-qr-codes')
+      .getPublicUrl(fileName);
+
+    return new Response(JSON.stringify({ 
+      imageUrl: publicUrlData.publicUrl,
+      message: "AI QR code generated successfully!"
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
 
   } catch (error) {
     console.error("General Edge Function Error:", error);
@@ -84,4 +132,3 @@ serve(async (req) => {
     });
   }
 })
-// Updated to use Gemini API structure

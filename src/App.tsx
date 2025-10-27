@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import NotFound from "./pages/NotFound";
 import QrGenerator from "./pages/QrGenerator";
+import Dashboard from "./pages/Dashboard";
 import Layout from "./components/Layout";
 
 const queryClient = new QueryClient();
@@ -18,7 +19,8 @@ const App = () => (
         <Routes>
           <Route element={<Layout />}>
             <Route path="/qr-generator" element={<QrGenerator />} />
-            <Route path="/" element={<Navigate to="/qr-generator" />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/" element={<Navigate to="/dashboard" />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
