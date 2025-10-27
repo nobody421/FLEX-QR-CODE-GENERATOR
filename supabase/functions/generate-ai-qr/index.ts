@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0'
 
 // IMPORTANT: This function requires a REPLICATE_API_TOKEN secret to be set in your Supabase project.
 const REPLICATE_API_TOKEN = Deno.env.get("REPLICATE_API_TOKEN")
@@ -12,6 +13,7 @@ const corsHeaders = {
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 serve(async (req) => {
+  // Handle CORS preflight request
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -28,12 +30,13 @@ serve(async (req) => {
     const { qr_data, prompt } = await req.json();
 
     if (!qr_data || !prompt) {
-      return new Response(JSON.stringify({ error: "Missing URL or prompt in request body." }), {
+      return new Response(JSON.stringify({ error: "Missing QR data or prompt in request body." }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
+    // 1. Start Prediction
     const startResponse = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
@@ -53,16 +56,18 @@ serve(async (req) => {
       }),
     });
 
-    const prediction = await startResponse.json();
+    const predictionStartResult = await startResponse.json();
 
     if (startResponse.status !== 201) {
-      return new Response(JSON.stringify({ error: prediction.detail }), {
+      console.error("Replicate Start Error:", predictionStartResult);
+      return new Response(JSON.stringify({ error: predictionStartResult.detail || "Failed to start AI prediction." }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const predictionUrl = prediction.urls.get;
+    // 2. Poll for Result
+    const predictionUrl = predictionStartResult.urls.get;
     let finalPrediction;
 
     while (true) {
@@ -81,20 +86,31 @@ serve(async (req) => {
       await sleep(1000);
     }
 
+    // 3. Handle Final Status
     if (finalPrediction.status === "failed") {
-        return new Response(JSON.stringify({ error: finalPrediction.error }), {
+        console.error("Replicate Prediction Failed:", finalPrediction.error);
+        return new Response(JSON.stringify({ error: finalPrediction.error || "AI generation failed." }), {
             status: 500,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
     }
 
-    return new Response(JSON.stringify({ imageUrl: finalPrediction.output[0] }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    // 4. Success
+    if (finalPrediction.output && finalPrediction.output.length > 0) {
+        return new Response(JSON.stringify({ imageUrl: finalPrediction.output[0] }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+    } else {
+        return new Response(JSON.stringify({ error: "AI generation succeeded but returned no image output." }), {
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+    }
+
 
   } catch (error) {
-    console.error(error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error("General Edge Function Error:", error);
+    return new Response(JSON.stringify({ error: error.message || "An unexpected server error occurred." }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
