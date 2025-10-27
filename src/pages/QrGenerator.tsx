@@ -14,11 +14,18 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Link, FileText, Mail, MessageSquare, Wifi } from 'lucide-react';
+
+import { UrlForm } from '@/components/qr-forms/UrlForm';
+import { TextForm } from '@/components/qr-forms/TextForm';
+import { EmailForm } from '@/components/qr-forms/EmailForm';
+import { SmsForm } from '@/components/qr-forms/SmsForm';
+import { WifiForm } from '@/components/qr-forms/WifiForm';
 
 const QrGenerator = () => {
   const qrRef = useRef<HTMLDivElement>(null);
   
-  const [url, setUrl] = useState('https://www.dyad.sh');
+  const [qrValue, setQrValue] = useState('https://www.dyad.sh');
   const [size, setSize] = useState(256);
   const [fgColor, setFgColor] = useState('#000000');
   const [bgColor, setBgColor] = useState('#ffffff');
@@ -54,6 +61,28 @@ const QrGenerator = () => {
     }
   };
 
+  const handleContentTypeChange = (type: string) => {
+    switch (type) {
+      case 'url':
+        setQrValue('https://www.dyad.sh');
+        break;
+      case 'text':
+        setQrValue('');
+        break;
+      case 'email':
+        setQrValue('mailto:');
+        break;
+      case 'sms':
+        setQrValue('smsto:');
+        break;
+      case 'wifi':
+        setQrValue('WIFI:T:WPA;S:;P:;;');
+        break;
+      default:
+        setQrValue('');
+    }
+  };
+
   const imageSettings = logoImage ? {
     src: logoImage,
     height: size * logoScale,
@@ -67,25 +96,47 @@ const QrGenerator = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <Tabs defaultValue="style" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="style">Style</TabsTrigger>
+              <TabsTrigger value="style">Content & Style</TabsTrigger>
               <TabsTrigger value="logo">Logo</TabsTrigger>
               <TabsTrigger value="download">Download</TabsTrigger>
             </TabsList>
             <TabsContent value="style" className="space-y-6 mt-6">
               <Card>
+                <CardHeader>
+                  <CardTitle>Content Type</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Tabs defaultValue="url" className="w-full" onValueChange={handleContentTypeChange}>
+                    <TabsList className="grid w-full grid-cols-5">
+                      <TabsTrigger value="url"><Link className="h-4 w-4" /></TabsTrigger>
+                      <TabsTrigger value="text"><FileText className="h-4 w-4" /></TabsTrigger>
+                      <TabsTrigger value="email"><Mail className="h-4 w-4" /></TabsTrigger>
+                      <TabsTrigger value="sms"><MessageSquare className="h-4 w-4" /></TabsTrigger>
+                      <TabsTrigger value="wifi"><Wifi className="h-4 w-4" /></TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="url" className="mt-4">
+                      <UrlForm onValueChange={setQrValue} initialValue="https://www.dyad.sh" />
+                    </TabsContent>
+                    <TabsContent value="text" className="mt-4">
+                      <TextForm onValueChange={setQrValue} />
+                    </TabsContent>
+                    <TabsContent value="email" className="mt-4">
+                      <EmailForm onValueChange={setQrValue} />
+                    </TabsContent>
+                    <TabsContent value="sms" className="mt-4">
+                      <SmsForm onValueChange={setQrValue} />
+                    </TabsContent>
+                    <TabsContent value="wifi" className="mt-4">
+                      <WifiForm onValueChange={setQrValue} />
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
+              <Card>
                   <CardHeader>
-                      <CardTitle>Content & Style</CardTitle>
+                      <CardTitle>Style</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                          <Label htmlFor="url">URL</Label>
-                          <Input 
-                              id="url" 
-                              value={url} 
-                              onChange={(e) => setUrl(e.target.value)}
-                              placeholder="https://example.com"
-                          />
-                      </div>
                       <div className="space-y-2">
                           <Label>Size: {size}px</Label>
                           <Slider value={[size]} onValueChange={(v) => setSize(v[0])} min={64} max={1024} step={8} />
@@ -165,7 +216,7 @@ const QrGenerator = () => {
           <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-700 rounded-lg p-4 h-full min-h-[400px]">
               <div ref={qrRef}>
                   <QRCodeCanvas 
-                      value={url} 
+                      value={qrValue} 
                       size={size}
                       fgColor={fgColor}
                       bgColor={bgColor}
