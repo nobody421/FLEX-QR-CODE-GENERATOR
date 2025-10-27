@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,8 +14,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Link, FileText, Mail, MessageSquare, Wifi, Sparkles, Loader2, Save, Palette } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Link, FileText, Mail, MessageSquare, Wifi, Sparkles, Loader2, Save, Palette, Eye } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
@@ -35,10 +34,10 @@ const QrGenerator = () => {
   const [size, setSize] = useState(256);
   const [fgColor, setFgColor] = useState('#000000');
   const [bgColor, setBgColor] = useState('#ffffff');
-  const [level, setLevel] = useState<'L' | 'M' | 'Q' | 'H'>('L');
+  const [level, setLevel] = useState<'L' | 'M' | 'Q' | 'H'>('M');
   const [imageFormat, setImageFormat] = useState('png');
   const [logoImage, setLogoImage] = useState<string | undefined>(undefined);
-  const [logoScale, setLogoScale] = useState(0.25);
+  const [logoScale, setLogoScale] = useState(0.2);
   const [excavate, setExcavate] = useState(true);
   const [customPattern, setCustomPattern] = useState('#000000');
   const [qrName, setQrName] = useState('');
@@ -56,6 +55,7 @@ const QrGenerator = () => {
   const [aiQrImageUrl, setAiQrImageUrl] = useState<string | null>(null);
   const [aiQrError, setAiQrError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [previewMode, setPreviewMode] = useState<'standard' | 'ai'>('standard');
 
   // Generate a unique short code
   const generateShortCode = () => {
@@ -63,13 +63,13 @@ const QrGenerator = () => {
   };
 
   const handleDownload = async () => {
-    if (activeTab === 'ai' && aiQrImageUrl) {
+    if (previewMode === 'ai' && aiQrImageUrl) {
       try {
         const response = await fetch(aiQrImageUrl);
         const blob = await response.blob();
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = `ai-flexqr-code.png`;
+        link.download = `ai-flexqr-code-${qrName || 'unnamed'}.png`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -87,7 +87,7 @@ const QrGenerator = () => {
         const image = canvas.toDataURL(`image/${imageFormat}`);
         const link = document.createElement('a');
         link.href = image;
-        link.download = `flexqr-code.${imageFormat}`;
+        link.download = `flexqr-code-${qrName || 'unnamed'}.${imageFormat}`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -128,6 +128,7 @@ const QrGenerator = () => {
       if (error) throw new Error(error.message);
       if (data.error) throw new Error(data.error);
       setAiQrImageUrl(data.imageUrl);
+      setPreviewMode('ai');
       showSuccess("AI QR Code generated successfully!");
     } catch (err: any) {
       console.error(err);
@@ -194,9 +195,10 @@ const QrGenerator = () => {
   } : undefined;
 
   return (
-    <div className="w-full max-w-5xl mx-auto">
+    <div className="w-full max-w-6xl mx-auto">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">QR Generator</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
           <Tabs defaultValue="style" className="w-full" onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="style">Content & Style</TabsTrigger>
@@ -226,29 +228,95 @@ const QrGenerator = () => {
                 </CardContent>
               </Card>
               <Card>
-                  <CardHeader><CardTitle>Style</CardTitle></CardHeader>
-                  <CardContent className="space-y-4">
-                      <div className="space-y-2"><Label>Size: {size}px</Label><Slider value={[size]} onValueChange={(v) => setSize(v[0])} min={64} max={1024} step={8} /></div>
-                      <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="fgColor">Foreground</Label>
-                            <div className="flex items-center gap-2">
-                              <Input id="fgColor" type="color" value={fgColor} onChange={(e) => setFgColor(e.target.value)} className="p-1 h-10 w-full" />
-                              <div className="flex items-center gap-2">
-                                <Palette className="h-4 w-4" />
-                                <Input 
-                                  type="text" 
-                                  value={customPattern} 
-                                  onChange={(e) => setCustomPattern(e.target.value)} 
-                                  placeholder="#000000" 
-                                  className="w-24" 
-                                />
-                              </div>
-                            </div>
-                          </div>
-                          <div className="space-y-2"><Label htmlFor="bgColor">Background</Label><Input id="bgColor" type="color" value={bgColor} onChange={(e) => setBgColor(e.target.value)} className="p-1 h-10 w-full" /></div>
+                  <CardHeader><CardTitle>Style Customization</CardTitle></CardHeader>
+                  <CardContent className="space-y-6">
+                      <div className="space-y-2">
+                        <Label>Size: {size}px</Label>
+                        <Slider 
+                          value={[size]} 
+                          onValueChange={(v) => setSize(v[0])} 
+                          min={128} 
+                          max={1024} 
+                          step={8} 
+                        />
                       </div>
-                      <div className="space-y-2"><Label>Error Correction</Label><Select onValueChange={(v: 'L'|'M'|'Q'|'H') => setLevel(v)} defaultValue={level}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="L">Low</SelectItem><SelectItem value="M">Medium</SelectItem><SelectItem value="Q">Quartile</SelectItem><SelectItem value="H">High</SelectItem></SelectContent></Select></div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Foreground Color</Label>
+                          <div className="flex items-center gap-2">
+                            <Input 
+                              type="color" 
+                              value={fgColor} 
+                              onChange={(e) => setFgColor(e.target.value)} 
+                              className="p-1 h-10 w-full" 
+                            />
+                            <Input 
+                              type="text" 
+                              value={fgColor} 
+                              onChange={(e) => setFgColor(e.target.value)} 
+                              placeholder="#000000" 
+                              className="w-24" 
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label>Background Color</Label>
+                          <div className="flex items-center gap-2">
+                            <Input 
+                              type="color" 
+                              value={bgColor} 
+                              onChange={(e) => setBgColor(e.target.value)} 
+                              className="p-1 h-10 w-full" 
+                            />
+                            <Input 
+                              type="text" 
+                              value={bgColor} 
+                              onChange={(e) => setBgColor(e.target.value)} 
+                              placeholder="#FFFFFF" 
+                              className="w-24" 
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Custom Pattern Color</Label>
+                          <div className="flex items-center gap-2">
+                            <Palette className="h-5 w-5" />
+                            <Input 
+                              type="color" 
+                              value={customPattern} 
+                              onChange={(e) => setCustomPattern(e.target.value)} 
+                              className="p-1 h-10 w-full" 
+                            />
+                            <Input 
+                              type="text" 
+                              value={customPattern} 
+                              onChange={(e) => setCustomPattern(e.target.value)} 
+                              placeholder="#000000" 
+                              className="w-24" 
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label>Error Correction Level</Label>
+                          <Select onValueChange={(v: 'L'|'M'|'Q'|'H') => setLevel(v)} defaultValue={level}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="L">Low (7%)</SelectItem>
+                              <SelectItem value="M">Medium (15%)</SelectItem>
+                              <SelectItem value="Q">Quartile (25%)</SelectItem>
+                              <SelectItem value="H">High (30%)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
                   </CardContent>
               </Card>
               <Card>
@@ -272,28 +340,60 @@ const QrGenerator = () => {
             </TabsContent>
             <TabsContent value="logo" className="mt-6">
                <Card>
-                  <CardHeader><CardTitle>Logo</CardTitle></CardHeader>
+                  <CardHeader><CardTitle>Logo Integration</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
-                      <div className="space-y-2"><Label htmlFor="logo">Upload Logo</Label><Input id="logo" type="file" accept="image/*" onChange={handleLogoUpload} /></div>
+                      <div className="space-y-2">
+                        <Label htmlFor="logo">Upload Logo</Label>
+                        <Input id="logo" type="file" accept="image/*" onChange={handleLogoUpload} />
+                      </div>
                       {logoImage && (<>
-                        <div className="space-y-2"><Label>Logo Scale: {Math.round(logoScale * 100)}%</Label><Slider value={[logoScale]} onValueChange={(v) => setLogoScale(v[0])} min={0.1} max={0.4} step={0.01} /></div>
-                        <div className="flex items-center space-x-2"><Checkbox id="excavate" checked={excavate} onCheckedChange={(checked) => setExcavate(!!checked)} /><Label htmlFor="excavate">Clear space for logo</Label></div>
+                        <div className="space-y-2">
+                          <Label>Logo Scale: {Math.round(logoScale * 100)}%</Label>
+                          <Slider 
+                            value={[logoScale]} 
+                            onValueChange={(v) => setLogoScale(v[0])} 
+                            min={0.05} 
+                            max={0.3} 
+                            step={0.01} 
+                          />
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="excavate" 
+                            checked={excavate} 
+                            onCheckedChange={(checked) => setExcavate(!!checked)} 
+                          />
+                          <Label htmlFor="excavate">Clear space for logo (recommended)</Label>
+                        </div>
                       </>)}
                   </CardContent>
               </Card>
             </TabsContent>
             <TabsContent value="ai" className="mt-6">
               <Card>
-                <CardHeader><CardTitle className="flex items-center">AI QR Code <Sparkles className="ml-2 h-5 w-5 text-yellow-500" /></CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-yellow-500" />
+                    AI-Powered QR Code Generator
+                  </CardTitle>
+                </CardHeader>
                 <CardContent>
                   <AiQrForm onGenerate={handleGenerateAiQr} isGenerating={isGeneratingAiQr} />
                   {aiQrError && <p className="text-red-500 text-sm mt-4">{aiQrError}</p>}
+                  <div className="mt-4 p-4 bg-muted rounded-lg">
+                    <h4 className="font-medium mb-2">How it works:</h4>
+                    <ul className="text-sm text-muted-foreground list-disc pl-5 space-y-1">
+                      <li>Enter a URL and describe the visual style you want</li>
+                      <li>Our AI creates a unique QR code that matches your description</li>
+                      <li>The QR code maintains scannability while looking artistic</li>
+                    </ul>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>
             <TabsContent value="tracking" className="mt-6">
               <Card>
-                <CardHeader><CardTitle>Campaign Tracking</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Campaign Tracking & Limits</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="scan-limit">Scan Limit (optional)</Label>
@@ -302,94 +402,187 @@ const QrGenerator = () => {
                       type="number" 
                       value={scanLimit || ''} 
                       onChange={(e) => setScanLimit(e.target.value ? parseInt(e.target.value) : undefined)} 
-                      placeholder="Unlimited" 
+                      placeholder="Unlimited scans" 
                     />
+                    <p className="text-xs text-muted-foreground">QR code will stop working after reaching this limit</p>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="campaign-source">Campaign Source</Label>
-                    <Input 
-                      id="campaign-source" 
-                      value={campaignSource} 
-                      onChange={(e) => setCampaignSource(e.target.value)} 
-                      placeholder="utm_source" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="campaign-medium">Campaign Medium</Label>
-                    <Input 
-                      id="campaign-medium" 
-                      value={campaignMedium} 
-                      onChange={(e) => setCampaignMedium(e.target.value)} 
-                      placeholder="utm_medium" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="campaign-name">Campaign Name</Label>
-                    <Input 
-                      id="campaign-name" 
-                      value={campaignName} 
-                      onChange={(e) => setCampaignName(e.target.value)} 
-                      placeholder="utm_campaign" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="campaign-term">Campaign Term</Label>
-                    <Input 
-                      id="campaign-term" 
-                      value={campaignTerm} 
-                      onChange={(e) => setCampaignTerm(e.target.value)} 
-                      placeholder="utm_term" 
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="campaign-content">Campaign Content</Label>
-                    <Input 
-                      id="campaign-content" 
-                      value={campaignContent} 
-                      onChange={(e) => setCampaignContent(e.target.value)} 
-                      placeholder="utm_content" 
-                    />
+                  
+                  <div className="space-y-4 pt-4 border-t">
+                    <h3 className="font-medium">UTM Campaign Parameters</h3>
+                    <div className="space-y-2">
+                      <Label htmlFor="campaign-source">Campaign Source</Label>
+                      <Input 
+                        id="campaign-source" 
+                        value={campaignSource} 
+                        onChange={(e) => setCampaignSource(e.target.value)} 
+                        placeholder="e.g., newsletter, social" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="campaign-medium">Campaign Medium</Label>
+                      <Input 
+                        id="campaign-medium" 
+                        value={campaignMedium} 
+                        onChange={(e) => setCampaignMedium(e.target.value)} 
+                        placeholder="e.g., email, cpc" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="campaign-name">Campaign Name</Label>
+                      <Input 
+                        id="campaign-name" 
+                        value={campaignName} 
+                        onChange={(e) => setCampaignName(e.target.value)} 
+                        placeholder="e.g., summer-sale" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="campaign-term">Campaign Term</Label>
+                      <Input 
+                        id="campaign-term" 
+                        value={campaignTerm} 
+                        onChange={(e) => setCampaignTerm(e.target.value)} 
+                        placeholder="e.g., paid keywords" 
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="campaign-content">Campaign Content</Label>
+                      <Input 
+                        id="campaign-content" 
+                        value={campaignContent} 
+                        onChange={(e) => setCampaignContent(e.target.value)} 
+                        placeholder="e.g., call-to-action" 
+                      />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
             <TabsContent value="download" className="mt-6">
               <Card>
-                  <CardHeader><CardTitle>Download</CardTitle></CardHeader>
+                  <CardHeader><CardTitle>Export Options</CardTitle></CardHeader>
                   <CardContent className="space-y-4">
                       <div className="space-y-2">
                           <Label>Image Format</Label>
-                          <Select onValueChange={(v: 'png'|'jpeg'|'webp') => setImageFormat(v)} defaultValue={imageFormat} disabled={activeTab === 'ai'}>
-                              <SelectTrigger><SelectValue /></SelectTrigger>
-                              <SelectContent><SelectItem value="png">PNG</SelectItem><SelectItem value="jpeg">JPEG</SelectItem><SelectItem value="webp">WEBP</SelectItem></SelectContent>
+                          <Select 
+                            onValueChange={(v: 'png'|'jpeg'|'webp') => setImageFormat(v)} 
+                            defaultValue={imageFormat}
+                            disabled={previewMode === 'ai'}
+                          >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="png">PNG (Recommended)</SelectItem>
+                                <SelectItem value="jpeg">JPEG</SelectItem>
+                                <SelectItem value="webp">WebP</SelectItem>
+                              </SelectContent>
                           </Select>
-                          {activeTab === 'ai' && <p className="text-xs text-muted-foreground">AI QR codes are downloaded as PNGs.</p>}
+                          {previewMode === 'ai' && (
+                            <p className="text-xs text-muted-foreground">AI QR codes are downloaded as PNGs.</p>
+                          )}
                       </div>
-                      <Button onClick={handleDownload} className="w-full">Download QR Code</Button>
+                      <Button onClick={handleDownload} className="w-full">
+                        Download QR Code
+                      </Button>
                   </CardContent>
               </Card>
             </TabsContent>
           </Tabs>
-          <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-700 rounded-lg p-4 h-full min-h-[400px]">
-            {activeTab === 'ai' ? (
-              <>
-                {isGeneratingAiQr && <div className="flex flex-col items-center gap-4"><Loader2 className="h-16 w-16 animate-spin text-primary" /><p className="text-muted-foreground">Generating your masterpiece...</p></div>}
-                {!isGeneratingAiQr && aiQrImageUrl && (<img src={aiQrImageUrl} alt="AI Generated QR Code" className="w-full max-w-[400px] rounded-lg" />)}
-                {!isGeneratingAiQr && !aiQrImageUrl && (<div className="text-center text-gray-500"><Sparkles className="mx-auto h-12 w-12 mb-4" /><p>Your generated AI QR code will appear here.</p></div>)}
-              </>
-            ) : (
-              <div ref={qrRef}>
-                <QRCodeCanvas 
-                  value={qrValue} 
-                  size={size} 
-                  fgColor={customPattern} 
-                  bgColor={bgColor} 
-                  level={level} 
-                  imageSettings={imageSettings} 
-                />
+        </div>
+        
+        <div className="flex flex-col gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                Preview
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg p-6 min-h-[400px]">
+                {previewMode === 'ai' ? (
+                  <>
+                    {isGeneratingAiQr && (
+                      <div className="flex flex-col items-center gap-4">
+                        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                        <p className="text-muted-foreground">Generating your masterpiece...</p>
+                      </div>
+                    )}
+                    {!isGeneratingAiQr && aiQrImageUrl && (
+                      <img 
+                        src={aiQrImageUrl} 
+                        alt="AI Generated QR Code" 
+                        className="w-full max-w-[300px] rounded-lg shadow-lg" 
+                      />
+                    )}
+                    {!isGeneratingAiQr && !aiQrImageUrl && (
+                      <div className="text-center text-gray-500">
+                        <Sparkles className="mx-auto h-12 w-12 mb-4" />
+                        <p>Your generated AI QR code will appear here.</p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div ref={qrRef} className="bg-white p-4 rounded-lg shadow-lg">
+                    <QRCodeCanvas 
+                      value={qrValue} 
+                      size={size > 300 ? 300 : size} 
+                      fgColor={customPattern} 
+                      bgColor={bgColor} 
+                      level={level} 
+                      imageSettings={imageSettings} 
+                    />
+                  </div>
+                )}
+                
+                <div className="flex gap-2 mt-4">
+                  <Button 
+                    variant={previewMode === 'standard' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setPreviewMode('standard')}
+                  >
+                    Standard
+                  </Button>
+                  <Button 
+                    variant={previewMode === 'ai' ? 'default' : 'outline'} 
+                    size="sm"
+                    onClick={() => setPreviewMode('ai')}
+                    disabled={!aiQrImageUrl}
+                  >
+                    AI Version
+                  </Button>
+                </div>
               </div>
-            )}
-          </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Quick Tips</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Use high contrast colors for better scannability</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Test your QR code after customization</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Add UTM parameters to track campaign performance</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Set scan limits for time-sensitive promotions</span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

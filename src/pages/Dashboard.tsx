@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { showError } from '@/utils/toast';
 import { QrCodeCard } from '@/components/dashboard/QrCodeCard';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, BarChart3, QrCode, Calendar, Hash } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface QrCode {
@@ -16,19 +16,24 @@ interface QrCode {
   created_at: string;
   custom_pattern?: string;
   scan_count?: number;
+  campaign_source?: string;
+  campaign_medium?: string;
+  scan_limit?: number;
 }
 
 const Dashboard = () => {
   const [qrCodes, setQrCodes] = useState<QrCode[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [totalQrCodes, setTotalQrCodes] = useState(0);
+  const [totalScans, setTotalScans] = useState(0);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchQrCodes();
+    fetchDashboardData();
   }, []);
 
-  const fetchQrCodes = async () => {
+  const fetchDashboardData = async () => {
     try {
       setLoading(true);
       
@@ -50,9 +55,14 @@ const Dashboard = () => {
       }));
 
       setQrCodes(qrCodesWithCounts);
+      setTotalQrCodes(qrCodesWithCounts.length);
+      
+      // Calculate total scans
+      const total = qrCodesWithCounts.reduce((sum, qr) => sum + (qr.scan_count || 0), 0);
+      setTotalScans(total);
     } catch (error) {
-      console.error('Error fetching QR codes:', error);
-      showError('Failed to load QR codes');
+      console.error('Error fetching dashboard data:', error);
+      showError('Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
@@ -75,6 +85,51 @@ const Dashboard = () => {
           <Plus className="h-4 w-4 mr-2" />
           Create New QR
         </Button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-primary/10 p-3 rounded-full">
+                <QrCode className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total QR Codes</p>
+                <p className="text-2xl font-bold">{totalQrCodes}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-primary/10 p-3 rounded-full">
+                <Hash className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Scans</p>
+                <p className="text-2xl font-bold">{totalScans}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-primary/10 p-3 rounded-full">
+                <BarChart3 className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Avg. Scans/QR</p>
+                <p className="text-2xl font-bold">
+                  {totalQrCodes > 0 ? (totalScans / totalQrCodes).toFixed(1) : '0'}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card className="mb-6">
@@ -108,6 +163,9 @@ const Dashboard = () => {
                 scanCount={qr.scan_count || 0}
                 createdAt={qr.created_at}
                 customPattern={qr.custom_pattern}
+                campaignSource={qr.campaign_source}
+                campaignMedium={qr.campaign_medium}
+                scanLimit={qr.scan_limit}
               />
             ))
           ) : (

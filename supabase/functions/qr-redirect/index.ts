@@ -14,7 +14,8 @@ serve(async (req) => {
 
   try {
     const url = new URL(req.url)
-    const shortCode = url.pathname.split('/').pop()
+    const pathParts = url.pathname.split('/')
+    const shortCode = pathParts[pathParts.length - 1]
     
     if (!shortCode) {
       return new Response('Invalid QR code', { status: 400, headers: corsHeaders })
@@ -34,6 +35,7 @@ serve(async (req) => {
       .single()
 
     if (error || !qrCode) {
+      console.error('QR code not found:', error)
       return new Response('QR code not found', { status: 404, headers: corsHeaders })
     }
 
@@ -63,13 +65,17 @@ serve(async (req) => {
       city: 'unknown'
     }
 
-    await supabaseClient.from('qr_scans').insert({
+    const { error: scanError } = await supabaseClient.from('qr_scans').insert({
       qr_code_id: qrCode.id,
       ip_address: ipAddress,
       user_agent: userAgent,
       referrer: referrer,
       geolocation: geolocation
     })
+
+    if (scanError) {
+      console.error('Error logging scan:', scanError)
+    }
 
     // Build redirect URL with campaign tags
     const redirectUrl = new URL(qrCode.destination_url)
