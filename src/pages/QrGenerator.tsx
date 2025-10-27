@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // <-- FIX: Added missing imports
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
-
-// Import Card components
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 // Modular components
 import { QRPreview } from '@/components/qr-generator/QRPreview';
