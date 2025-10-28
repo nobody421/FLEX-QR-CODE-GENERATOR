@@ -5,11 +5,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import NotFound from "./pages/NotFound";
 import QrGenerator from "./pages/QrGenerator";
-import QrEditor from "./pages/QrEditor"; // <-- Added QrEditor import
+import QrEditor from "./pages/QrEditor";
 import Dashboard from "./pages/Dashboard";
 import Analytics from "./pages/Analytics";
 import Layout from "./components/Layout";
 import Settings from "./pages/Settings";
+import Login from "./pages/Login"; // Import the new Login page
 
 const queryClient = new QueryClient();
 
@@ -20,9 +21,10 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/login" element={<Login />} />
           <Route element={<Layout />}>
             <Route path="/qr-generator" element={<QrGenerator />} />
-            <Route path="/edit/:qrCodeId" element={<QrEditor />} /> {/* <-- New Editor Route */}
+            <Route path="/edit/:qrCodeId" element={<QrEditor />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/analytics/:qrCodeId" element={<Analytics />} />
             <Route path="/settings" element={<Settings />} />
