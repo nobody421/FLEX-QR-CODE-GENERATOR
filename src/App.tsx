@@ -5,10 +5,11 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import NotFound from "./pages/NotFound";
 import QrGenerator from "./pages/QrGenerator";
+import QrEditor from "./pages/QrEditor"; // <-- Added QrEditor import
 import Dashboard from "./pages/Dashboard";
-import Analytics from "./pages/Analytics"; // <-- Added Analytics import
+import Analytics from "./pages/Analytics";
 import Layout from "./components/Layout";
-import Settings from "./pages/Settings"; // <-- Added Settings import
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -21,9 +22,10 @@ const App = () => (
         <Routes>
           <Route element={<Layout />}>
             <Route path="/qr-generator" element={<QrGenerator />} />
+            <Route path="/edit/:qrCodeId" element={<QrEditor />} /> {/* <-- New Editor Route */}
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/analytics/:qrCodeId" element={<Analytics />} /> {/* <-- New Analytics Route */}
-            <Route path="/settings" element={<Settings />} /> {/* Ensure Settings route is present */}
+            <Route path="/analytics/:qrCodeId" element={<Analytics />} />
+            <Route path="/settings" element={<Settings />} />
             <Route path="/" element={<Navigate to="/dashboard" />} />
           </Route>
           <Route path="*" element={<NotFound />} />

@@ -2,10 +2,10 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Copy, QrCode, BarChart3, ExternalLink, Calendar, Hash } from 'lucide-react';
+import { Copy, QrCode, BarChart3, ExternalLink, Calendar, Hash, Edit } from 'lucide-react'; // <-- Added Edit icon
 import { QRCodeCanvas } from 'qrcode.react';
 import { showError, showSuccess } from '@/utils/toast';
-import { Link } from 'react-router-dom'; // <-- Added Link import
+import { Link } from 'react-router-dom';
 
 interface QrCodeCardProps {
   id: string;
@@ -113,11 +113,13 @@ export const QrCodeCard: React.FC<QrCodeCardProps> = ({
         </div>
         
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => copyToClipboard(qrUrl)} className="flex-1">
-            <QrCode className="h-4 w-4 mr-2" />
-            Copy URL
-          </Button>
-          <Link to={`/analytics/${id}`} className="flex-1"> {/* <-- Linked to Analytics page */}
+          <Link to={`/edit/${id}`} className="flex-1"> {/* <-- New Edit Link */}
+            <Button variant="outline" size="sm" className="w-full">
+              <Edit className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          </Link>
+          <Link to={`/analytics/${id}`} className="flex-1">
             <Button variant="outline" size="sm" className="w-full">
               <BarChart3 className="h-4 w-4 mr-2" />
               Analytics
