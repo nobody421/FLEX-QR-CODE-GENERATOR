@@ -5,8 +5,15 @@ import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { showError } from '@/utils/toast';
 import { QrCodeCard } from '@/components/dashboard/QrCodeCard';
-import { Plus, Search, BarChart3, QrCode, Calendar, Hash } from 'lucide-react';
+import { Plus, Search, BarChart3, QrCode, Hash, ArrowUpDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface QrCode {
   id: string;
@@ -14,12 +21,15 @@ interface QrCode {
   short_code: string;
   destination_url: string;
   created_at: string;
-  custom_pattern?: string;
+  color_1?: string;
   scan_count?: number;
   campaign_source?: string;
   campaign_medium?: string;
   scan_limit?: number;
 }
+
+type SortKey = 'created_at' | 'name' | 'scan_count';
+type SortOrder = 'asc' | 'desc';
 
 const Dashboard = () => {
   const [qrCodes, setQrCodes] = useState<QrCode[]>([]);
@@ -27,6 +37,8 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [totalQrCodes, setTotalQrCodes] = useState(0);
   const [totalScans, setTotalScans] = useState(0);
+  const [sortBy, setSortBy] = useState<SortKey>('created_at');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -68,11 +80,35 @@ const Dashboard = () => {
     }
   };
 
-  const filteredQrCodes = qrCodes.filter(qr => 
-    qr.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    qr.short_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    qr.destination_url?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredAndSortedQrCodes = qrCodes
+    .filter(qr => 
+      qr.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      qr.short_code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      qr.destination_url?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+      let aValue: string | number = 0;
+      let bValue: string | number = 0;
+
+      if (sortBy === 'scan_count') {
+        aValue = a.scan_count || 0;
+        bValue = b.scan_count || 0;
+      } else if (sortBy === 'name') {
+        aValue = a.name || '';
+        bValue = b.name || '';
+      } else { // created_at
+        aValue = new Date(a.created_at).getTime();
+        bValue = new Date(b.created_at).getTime();
+      }
+
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortOrder === 'asc' ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+      }
+      
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
 
   return (
     <div className="w-full max-w-6xl mx-auto">
@@ -133,15 +169,38 @@ const Dashboard = () => {
       </div>
 
       <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="relative">
+        <CardContent className="pt-6 flex flex-col md:flex-row gap-4">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
-              placeholder="Search QR codes..."
+              placeholder="Search QR codes by name or URL..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
+          </div>
+          
+          <div className="flex gap-2 items-center">
+            <Select 
+              value={sortBy} 
+              onValueChange={(value) => setSortBy(value as SortKey)}
+            >
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Sort By" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="created_at">Date Created</SelectItem>
+                <SelectItem value="scan_count">Total Scans</SelectItem>
+                <SelectItem value="name">Name</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+            >
+              <ArrowUpDown className="h-4 w-4" />
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -152,8 +211,8 @@ const Dashboard = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredQrCodes.length > 0 ? (
-            filteredQrCodes.map((qr) => (
+          {filteredAndSortedQrCodes.length > 0 ? (
+            filteredAndSortedQrCodes.map((qr) => (
               <QrCodeCard
                 key={qr.id}
                 id={qr.id}
@@ -162,7 +221,7 @@ const Dashboard = () => {
                 destinationUrl={qr.destination_url}
                 scanCount={qr.scan_count || 0}
                 createdAt={qr.created_at}
-                customPattern={qr.custom_pattern}
+                customPattern={qr.color_1} // Renamed from custom_pattern to color_1
                 campaignSource={qr.campaign_source}
                 campaignMedium={qr.campaign_medium}
                 scanLimit={qr.scan_limit}
@@ -170,7 +229,7 @@ const Dashboard = () => {
             ))
           ) : (
             <div className="col-span-full text-center py-12">
-              <p className="text-muted-foreground">No QR codes found</p>
+              <p className="text-muted-foreground">No QR codes found matching your criteria.</p>
               <Button 
                 onClick={() => navigate('/qr-generator')} 
                 className="mt-4"

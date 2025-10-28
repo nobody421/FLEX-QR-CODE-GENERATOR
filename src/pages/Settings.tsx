@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ProfileForm } from '@/components/settings/ProfileForm';
 
 // Utility function to manage theme (assuming a simple class-based theme)
 const setAppTheme = (theme: string) => {
@@ -123,6 +124,9 @@ const Settings = () => {
       
       <div className="grid grid-cols-1 gap-6">
         
+        {/* User Profile Management */}
+        <ProfileForm />
+
         {/* Google Account Linking */}
         <Card>
           <CardHeader>

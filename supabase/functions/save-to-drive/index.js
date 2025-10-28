@@ -60,7 +60,6 @@ serve(async (req) => {
     // For simplicity, we assume the token is valid for now.
 
     // 4. Prepare file data for Google Drive upload
-    const imageBuffer = Uint8Array.from(atob(base64Image), c => c.charCodeAt(0));
     const metadata = {
       name: fileName,
       mimeType: 'image/png', // Assuming PNG format for QR codes
