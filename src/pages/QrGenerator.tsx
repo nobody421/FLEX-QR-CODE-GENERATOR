@@ -29,7 +29,6 @@ const QrGenerator = () => {
   const [logoImage, setLogoImage] = useState<string | undefined>(undefined);
   const [logoScale, setLogoScale] = useState(0.2);
   const [excavate, setExcavate] = useState(true);
-  const [customPattern, setCustomPattern] = useState('#000000');
   const [qrName, setQrName] = useState('');
   const [scanLimit, setScanLimit] = useState<number | undefined>(undefined);
   
@@ -37,6 +36,11 @@ const QrGenerator = () => {
   const [borderStyle, setBorderStyle] = useState('square');
   const [centerStyle, setCenterStyle] = useState('square');
   
+  const [useGradient, setUseGradient] = useState(false);
+  const [color1, setColor1] = useState('#000000');
+  const [color2, setColor2] = useState('#000000');
+  const [gradientType, setGradientType] = useState<'linear' | 'radial'>('linear');
+
   const [campaignSource, setCampaignSource] = useState('');
   const [campaignMedium, setCampaignMedium] = useState('');
   const [campaignName, setCampaignName] = useState('');
@@ -93,7 +97,9 @@ const QrGenerator = () => {
           campaign_name: campaignName,
           campaign_term: campaignTerm,
           campaign_content: campaignContent,
-          custom_pattern: customPattern,
+          color_1: useGradient ? color1 : color1,
+          color_2: useGradient ? color2 : null,
+          gradient_type: useGradient ? gradientType : null,
           shape_style: shapeStyle,
           border_style: borderStyle,
           center_style: centerStyle,
@@ -137,11 +143,14 @@ const QrGenerator = () => {
               <StyleCustomization 
                 size={size} setSize={setSize}
                 bgColor={bgColor} setBgColor={setBgColor}
-                customPattern={customPattern} setCustomPattern={setCustomPattern}
                 level={level} setLevel={setLevel}
                 shapeStyle={shapeStyle} setShapeStyle={setShapeStyle}
                 borderStyle={borderStyle} setBorderStyle={setBorderStyle}
                 centerStyle={centerStyle} setCenterStyle={setCenterStyle}
+                useGradient={useGradient} setUseGradient={setUseGradient}
+                color1={color1} setColor1={setColor1}
+                color2={color2} setColor2={setColor2}
+                gradientType={gradientType} setGradientType={setGradientType}
               />
               <SaveQrCode 
                 qrName={qrName} setQrName={setQrName}
@@ -180,7 +189,6 @@ const QrGenerator = () => {
             ref={qrRef}
             qrValue={qrValue}
             size={size}
-            fgColor={customPattern}
             bgColor={bgColor}
             level={level}
             logoImage={logoImage}
@@ -189,6 +197,10 @@ const QrGenerator = () => {
             shapeStyle={shapeStyle}
             borderStyle={borderStyle}
             centerStyle={centerStyle}
+            useGradient={useGradient}
+            color1={color1}
+            color2={color2}
+            gradientType={gradientType}
           />
           <QuickTips />
         </div>

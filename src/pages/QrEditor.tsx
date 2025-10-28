@@ -33,7 +33,6 @@ const QrEditor = () => {
   const [logoImage, setLogoImage] = useState<string | undefined>(undefined);
   const [logoScale, setLogoScale] = useState(0.2);
   const [excavate, setExcavate] = useState(true);
-  const [customPattern, setCustomPattern] = useState('#000000');
   const [qrName, setQrName] = useState('');
   const [scanLimit, setScanLimit] = useState<number | undefined>(undefined);
   
@@ -41,6 +40,11 @@ const QrEditor = () => {
   const [borderStyle, setBorderStyle] = useState('square');
   const [centerStyle, setCenterStyle] = useState('square');
   
+  const [useGradient, setUseGradient] = useState(false);
+  const [color1, setColor1] = useState('#000000');
+  const [color2, setColor2] = useState('#000000');
+  const [gradientType, setGradientType] = useState<'linear' | 'radial'>('linear');
+
   const [campaignSource, setCampaignSource] = useState('');
   const [campaignMedium, setCampaignMedium] = useState('');
   const [campaignName, setCampaignName] = useState('');
@@ -68,7 +72,6 @@ const QrEditor = () => {
 
       setQrName(data.name || '');
       setQrValue(data.destination_url || '');
-      setCustomPattern(data.custom_pattern || '#000000');
       setScanLimit(data.scan_limit || undefined);
       setCampaignSource(data.campaign_source || '');
       setCampaignMedium(data.campaign_medium || '');
@@ -78,6 +81,15 @@ const QrEditor = () => {
       setShapeStyle(data.shape_style || 'square');
       setBorderStyle(data.border_style || 'square');
       setCenterStyle(data.center_style || 'square');
+      
+      setColor1(data.color_1 || '#000000');
+      if (data.color_2 && data.gradient_type) {
+        setUseGradient(true);
+        setColor2(data.color_2);
+        setGradientType(data.gradient_type as 'linear' | 'radial');
+      } else {
+        setUseGradient(false);
+      }
       
     } catch (error) {
       console.error('Error fetching QR code for editing:', error);
@@ -125,7 +137,9 @@ const QrEditor = () => {
           campaign_name: campaignName,
           campaign_term: campaignTerm,
           campaign_content: campaignContent,
-          custom_pattern: customPattern,
+          color_1: useGradient ? color1 : color1,
+          color_2: useGradient ? color2 : null,
+          gradient_type: useGradient ? gradientType : null,
           shape_style: shapeStyle,
           border_style: borderStyle,
           center_style: centerStyle,
@@ -185,11 +199,14 @@ const QrEditor = () => {
               <StyleCustomization 
                 size={size} setSize={setSize}
                 bgColor={bgColor} setBgColor={setBgColor}
-                customPattern={customPattern} setCustomPattern={setCustomPattern}
                 level={level} setLevel={setLevel}
                 shapeStyle={shapeStyle} setShapeStyle={setShapeStyle}
                 borderStyle={borderStyle} setBorderStyle={setBorderStyle}
                 centerStyle={centerStyle} setCenterStyle={setCenterStyle}
+                useGradient={useGradient} setUseGradient={setUseGradient}
+                color1={color1} setColor1={setColor1}
+                color2={color2} setColor2={setColor2}
+                gradientType={gradientType} setGradientType={setGradientType}
               />
               <SaveQrCode 
                 qrName={qrName} setQrName={setQrName}
@@ -228,7 +245,6 @@ const QrEditor = () => {
             ref={qrRef}
             qrValue={qrValue}
             size={size}
-            fgColor={customPattern}
             bgColor={bgColor}
             level={level}
             logoImage={logoImage}
@@ -237,6 +253,10 @@ const QrEditor = () => {
             shapeStyle={shapeStyle}
             borderStyle={borderStyle}
             centerStyle={centerStyle}
+            useGradient={useGradient}
+            color1={color1}
+            color2={color2}
+            gradientType={gradientType}
           />
           <QuickTips />
         </div>

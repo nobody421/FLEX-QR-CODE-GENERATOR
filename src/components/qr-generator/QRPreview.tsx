@@ -6,7 +6,6 @@ import StyledQrCode, { StyledQrCodeRef } from './StyledQrCode';
 interface QRPreviewProps {
   qrValue: string;
   size: number;
-  fgColor: string;
   bgColor: string;
   level: 'L' | 'M' | 'Q' | 'H';
   logoImage?: string;
@@ -15,20 +14,15 @@ interface QRPreviewProps {
   shapeStyle: string;
   borderStyle: string;
   centerStyle: string;
+  useGradient: boolean;
+  color1: string;
+  color2: string;
+  gradientType: 'linear' | 'radial';
 }
 
 export const QRPreview = forwardRef<StyledQrCodeRef, QRPreviewProps>(({
-  qrValue,
-  size,
-  fgColor,
-  bgColor,
-  level,
-  logoImage,
-  logoScale,
-  excavate,
-  shapeStyle,
-  borderStyle,
-  centerStyle,
+  qrValue, size, bgColor, level, logoImage, logoScale, excavate, shapeStyle, borderStyle, centerStyle,
+  useGradient, color1, color2, gradientType
 }, ref) => {
   return (
     <Card>
@@ -45,7 +39,6 @@ export const QRPreview = forwardRef<StyledQrCodeRef, QRPreviewProps>(({
               ref={ref}
               value={qrValue}
               size={size > 300 ? 300 : size}
-              fgColor={fgColor}
               bgColor={bgColor}
               level={level}
               logoImage={logoImage}
@@ -54,6 +47,10 @@ export const QRPreview = forwardRef<StyledQrCodeRef, QRPreviewProps>(({
               shapeStyle={shapeStyle}
               borderStyle={borderStyle}
               centerStyle={centerStyle}
+              useGradient={useGradient}
+              color1={color1}
+              color2={color2}
+              gradientType={gradientType}
             />
           </div>
           
