@@ -34,6 +34,12 @@ const QrEditor = () => {
   const [qrName, setQrName] = useState('');
   const [scanLimit, setScanLimit] = useState<number | undefined>(undefined);
   
+  // --- New Style States (Defaulted) ---
+  const [shapeStyle, setShapeStyle] = useState('square');
+  const [borderStyle, setBorderStyle] = useState('square');
+  const [centerStyle, setCenterStyle] = useState('square');
+  // -------------------------
+  
   // Campaign tracking
   const [campaignSource, setCampaignSource] = useState('');
   const [campaignMedium, setCampaignMedium] = useState('');
@@ -195,6 +201,13 @@ const QrEditor = () => {
                 setCustomPattern={setCustomPattern}
                 level={level}
                 setLevel={setLevel}
+                // New Props added to resolve TS error
+                shapeStyle={shapeStyle}
+                setShapeStyle={setShapeStyle}
+                borderStyle={borderStyle}
+                setBorderStyle={setBorderStyle}
+                centerStyle={centerStyle}
+                setCenterStyle={setCenterStyle}
               />
               <SaveQrCode 
                 qrName={qrName}
