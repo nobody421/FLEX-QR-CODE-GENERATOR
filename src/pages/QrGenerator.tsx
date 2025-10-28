@@ -30,12 +30,6 @@ const QrGenerator = () => {
   const [qrName, setQrName] = useState('');
   const [scanLimit, setScanLimit] = useState<number | undefined>(undefined);
   
-  // --- New Style States ---
-  const [shapeStyle, setShapeStyle] = useState('square');
-  const [borderStyle, setBorderStyle] = useState('square');
-  const [centerStyle, setCenterStyle] = useState('square');
-  // -------------------------
-  
   // Campaign tracking
   const [campaignSource, setCampaignSource] = useState('');
   const [campaignMedium, setCampaignMedium] = useState('');
@@ -107,7 +101,6 @@ const QrGenerator = () => {
           campaign_term: campaignTerm,
           campaign_content: campaignContent,
           custom_pattern: customPattern
-          // Note: Advanced styles (shapeStyle, borderStyle, centerStyle) are not saved yet
         })
         .select()
         .single();
@@ -156,13 +149,6 @@ const QrGenerator = () => {
                 setCustomPattern={setCustomPattern}
                 level={level}
                 setLevel={setLevel}
-                // New Props
-                shapeStyle={shapeStyle}
-                setShapeStyle={setShapeStyle}
-                borderStyle={borderStyle}
-                setBorderStyle={setBorderStyle}
-                centerStyle={centerStyle}
-                setCenterStyle={setCenterStyle}
               />
               <SaveQrCode 
                 qrName={qrName}
@@ -217,7 +203,6 @@ const QrGenerator = () => {
             logoImage={logoImage}
             logoScale={logoScale}
             excavate={excavate}
-            // Removed AI props
           />
           <QuickTips />
         </div>
