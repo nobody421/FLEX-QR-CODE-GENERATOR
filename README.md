@@ -1,1 +1,1 @@
-# Welcome to your Dyad app
+# Welcome to FLEX QR Code Generator 
