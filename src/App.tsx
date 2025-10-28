@@ -6,7 +6,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import NotFound from "./pages/NotFound";
 import QrGenerator from "./pages/QrGenerator";
 import Dashboard from "./pages/Dashboard";
+import Analytics from "./pages/Analytics"; // <-- Added Analytics import
 import Layout from "./components/Layout";
+import Settings from "./pages/Settings"; // <-- Added Settings import
 
 const queryClient = new QueryClient();
 
@@ -20,6 +22,8 @@ const App = () => (
           <Route element={<Layout />}>
             <Route path="/qr-generator" element={<QrGenerator />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/analytics/:qrCodeId" element={<Analytics />} /> {/* <-- New Analytics Route */}
+            <Route path="/settings" element={<Settings />} /> {/* Ensure Settings route is present */}
             <Route path="/" element={<Navigate to="/dashboard" />} />
           </Route>
           <Route path="*" element={<NotFound />} />

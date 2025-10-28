@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Copy, QrCode, BarChart3, ExternalLink, Calendar, Hash } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import { showError, showSuccess } from '@/utils/toast';
+import { Link } from 'react-router-dom'; // <-- Added Link import
 
 interface QrCodeCardProps {
   id: string;
@@ -116,10 +117,12 @@ export const QrCodeCard: React.FC<QrCodeCardProps> = ({
             <QrCode className="h-4 w-4 mr-2" />
             Copy URL
           </Button>
-          <Button variant="outline" size="sm" className="flex-1">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Analytics
-          </Button>
+          <Link to={`/analytics/${id}`} className="flex-1"> {/* <-- Linked to Analytics page */}
+            <Button variant="outline" size="sm" className="w-full">
+              <BarChart3 className="h-4 w-4 mr-2" />
+              Analytics
+            </Button>
+          </Link>
         </div>
       </CardContent>
     </Card>
