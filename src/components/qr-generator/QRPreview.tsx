@@ -1,7 +1,7 @@
-import React, { useRef } from 'react';
+import React, { forwardRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { QRCodeCanvas } from 'qrcode.react';
 import { Eye } from 'lucide-react';
+import StyledQrCode, { StyledQrCodeRef } from './StyledQrCode';
 
 interface QRPreviewProps {
   qrValue: string;
@@ -12,10 +12,12 @@ interface QRPreviewProps {
   logoImage?: string;
   logoScale: number;
   excavate: boolean;
-  // Removed AI-related props: previewMode, isGeneratingAiQr, aiQrImageUrl, setPreviewMode
+  shapeStyle: string;
+  borderStyle: string;
+  centerStyle: string;
 }
 
-export const QRPreview: React.FC<QRPreviewProps> = ({
+export const QRPreview = forwardRef<StyledQrCodeRef, QRPreviewProps>(({
   qrValue,
   size,
   fgColor,
@@ -24,16 +26,10 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
   logoImage,
   logoScale,
   excavate,
-}) => {
-  const qrRef = useRef<HTMLDivElement>(null);
-  
-  const imageSettings = logoImage ? {
-    src: logoImage,
-    height: size * logoScale,
-    width: size * logoScale,
-    excavate: excavate,
-  } : undefined;
-
+  shapeStyle,
+  borderStyle,
+  centerStyle,
+}, ref) => {
   return (
     <Card>
       <CardHeader>
@@ -44,22 +40,28 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
       </CardHeader>
       <CardContent>
         <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg p-6 min-h-[400px]">
-          <div ref={qrRef} className="bg-white p-4 rounded-lg shadow-lg">
-            <QRCodeCanvas 
-              value={qrValue} 
-              size={size > 300 ? 300 : size} 
-              fgColor={fgColor} 
-              bgColor={bgColor} 
-              level={level} 
-              imageSettings={imageSettings} 
+          <div className="bg-white p-4 rounded-lg shadow-lg">
+            <StyledQrCode
+              ref={ref}
+              value={qrValue}
+              size={size > 300 ? 300 : size}
+              fgColor={fgColor}
+              bgColor={bgColor}
+              level={level}
+              logoImage={logoImage}
+              logoScale={logoScale}
+              excavate={excavate}
+              shapeStyle={shapeStyle}
+              borderStyle={borderStyle}
+              centerStyle={centerStyle}
             />
           </div>
           
           <div className="text-center text-gray-500 mt-4">
-            <p className="text-sm">Standard QR Code</p>
+            <p className="text-sm">Custom Styled QR Code</p>
           </div>
         </div>
       </CardContent>
     </Card>
   );
-};
+});

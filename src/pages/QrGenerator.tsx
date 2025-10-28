@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
+import { FileExtension } from 'qr-code-styling';
 
 // Modular components
 import { QRPreview } from '@/components/qr-generator/QRPreview';
@@ -14,55 +15,43 @@ import { LogoIntegration } from '@/components/qr-generator/LogoIntegration';
 import { CampaignTracking } from '@/components/qr-generator/CampaignTracking';
 import { ExportOptions } from '@/components/qr-generator/ExportOptions';
 import { SaveQrCode } from '@/components/qr-generator/SaveQrCode';
+import { StyledQrCodeRef } from '@/components/qr-generator/StyledQrCode';
 
 const QrGenerator = () => {
   const navigate = useNavigate();
+  const qrRef = useRef<StyledQrCodeRef>(null);
   
   const [qrValue, setQrValue] = useState('https://www.dyad.sh');
   const [size, setSize] = useState(256);
   const [bgColor, setBgColor] = useState('#ffffff');
   const [level, setLevel] = useState<'L' | 'M' | 'Q' | 'H'>('M');
-  const [imageFormat, setImageFormat] = useState<'png' | 'jpeg' | 'webp'>('png');
+  const [imageFormat, setImageFormat] = useState<FileExtension>('png');
   const [logoImage, setLogoImage] = useState<string | undefined>(undefined);
   const [logoScale, setLogoScale] = useState(0.2);
   const [excavate, setExcavate] = useState(true);
-  const [customPattern, setCustomPattern] = useState('#000000'); // Used as module color
+  const [customPattern, setCustomPattern] = useState('#000000');
   const [qrName, setQrName] = useState('');
   const [scanLimit, setScanLimit] = useState<number | undefined>(undefined);
   
-  // --- New Style States ---
   const [shapeStyle, setShapeStyle] = useState('square');
   const [borderStyle, setBorderStyle] = useState('square');
   const [centerStyle, setCenterStyle] = useState('square');
-  // -------------------------
   
-  // Campaign tracking
   const [campaignSource, setCampaignSource] = useState('');
   const [campaignMedium, setCampaignMedium] = useState('');
   const [campaignName, setCampaignName] = useState('');
   const [campaignTerm, setCampaignTerm] = useState('');
   const [campaignContent, setCampaignContent] = useState('');
 
-  const [activeTab, setActiveTab] = useState('style');
   const [saving, setSaving] = useState(false);
-  const [previewMode, setPreviewMode] = useState<'standard' | 'ai'>('standard');
 
-  // Generate a unique short code
-  const generateShortCode = () => {
-    return Math.random().toString(36).substring(2, 8);
-  };
+  const generateShortCode = () => Math.random().toString(36).substring(2, 8);
 
-  const handleDownload = async () => {
-    const canvas = document.querySelector('canvas');
-    if (canvas) {
-      const image = canvas.toDataURL(`image/${imageFormat}`);
-      const link = document.createElement('a');
-      link.href = image;
-      link.download = `flexqr-code-${qrName || 'unnamed'}.${imageFormat}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
+  const handleDownload = () => {
+    qrRef.current?.download({
+      name: `flexqr-code-${qrName || 'unnamed'}`,
+      extension: imageFormat,
+    });
   };
 
   const handleContentTypeChange = (type: string) => {
@@ -79,10 +68,8 @@ const QrGenerator = () => {
   const handleSaveQrCode = async () => {
     setSaving(true);
     try {
-      // Generate a unique short code
       const shortCode = generateShortCode();
       
-      // Add campaign parameters to destination URL if any are set
       let finalDestinationUrl = qrValue;
       if (campaignSource || campaignMedium || campaignName || campaignTerm || campaignContent) {
         const url = new URL(qrValue);
@@ -94,7 +81,7 @@ const QrGenerator = () => {
         finalDestinationUrl = url.toString();
       }
       
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('qr_codes')
         .insert({
           name: qrName || 'Untitled QR Code',
@@ -106,11 +93,11 @@ const QrGenerator = () => {
           campaign_name: campaignName,
           campaign_term: campaignTerm,
           campaign_content: campaignContent,
-          custom_pattern: customPattern
-          // Note: Advanced styles (shapeStyle, borderStyle, centerStyle) are not saved yet
-        })
-        .select()
-        .single();
+          custom_pattern: customPattern,
+          shape_style: shapeStyle,
+          border_style: borderStyle,
+          center_style: centerStyle,
+        });
 
       if (error) throw error;
       
@@ -129,7 +116,7 @@ const QrGenerator = () => {
       <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">QR Generator</h1>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
-          <Tabs defaultValue="style" className="w-full" onValueChange={setActiveTab}>
+          <Tabs defaultValue="style" className="w-full">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="style">Content & Style</TabsTrigger>
               <TabsTrigger value="logo">Logo</TabsTrigger>
@@ -148,59 +135,40 @@ const QrGenerator = () => {
                 </CardContent>
               </Card>
               <StyleCustomization 
-                size={size}
-                setSize={setSize}
-                bgColor={bgColor}
-                setBgColor={setBgColor}
-                customPattern={customPattern}
-                setCustomPattern={setCustomPattern}
-                level={level}
-                setLevel={setLevel}
-                // New Props
-                shapeStyle={shapeStyle}
-                setShapeStyle={setShapeStyle}
-                borderStyle={borderStyle}
-                setBorderStyle={setBorderStyle}
-                centerStyle={centerStyle}
-                setCenterStyle={setCenterStyle}
+                size={size} setSize={setSize}
+                bgColor={bgColor} setBgColor={setBgColor}
+                customPattern={customPattern} setCustomPattern={setCustomPattern}
+                level={level} setLevel={setLevel}
+                shapeStyle={shapeStyle} setShapeStyle={setShapeStyle}
+                borderStyle={borderStyle} setBorderStyle={setBorderStyle}
+                centerStyle={centerStyle} setCenterStyle={setCenterStyle}
               />
               <SaveQrCode 
-                qrName={qrName}
-                setQrName={setQrName}
-                saving={saving}
-                onSave={handleSaveQrCode}
+                qrName={qrName} setQrName={setQrName}
+                saving={saving} onSave={handleSaveQrCode}
               />
             </TabsContent>
             <TabsContent value="logo" className="mt-6">
               <LogoIntegration 
-                logoImage={logoImage}
-                setLogoImage={setLogoImage}
-                logoScale={logoScale}
-                setLogoScale={setLogoScale}
-                excavate={excavate}
-                setExcavate={setExcavate}
+                logoImage={logoImage} setLogoImage={setLogoImage}
+                logoScale={logoScale} setLogoScale={setLogoScale}
+                excavate={excavate} setExcavate={setExcavate}
               />
             </TabsContent>
             <TabsContent value="tracking" className="mt-6">
               <CampaignTracking 
-                scanLimit={scanLimit}
-                setScanLimit={setScanLimit}
-                campaignSource={campaignSource}
-                setCampaignSource={setCampaignSource}
-                campaignMedium={campaignMedium}
-                setCampaignMedium={setCampaignMedium}
-                campaignName={campaignName}
-                setCampaignName={setCampaignName}
-                campaignTerm={campaignTerm}
-                setCampaignTerm={setCampaignTerm}
-                campaignContent={campaignContent}
-                setCampaignContent={setCampaignContent}
+                scanLimit={scanLimit} setScanLimit={setScanLimit}
+                campaignSource={campaignSource} setCampaignSource={setCampaignSource}
+                campaignMedium={campaignMedium} setCampaignMedium={setCampaignMedium}
+                campaignName={campaignName} setCampaignName={setCampaignName}
+                campaignTerm={campaignTerm} setCampaignTerm={setCampaignTerm}
+                campaignContent={campaignContent} setCampaignContent={setCampaignContent}
               />
             </TabsContent>
             <TabsContent value="download" className="mt-6">
               <ExportOptions 
-                imageFormat={imageFormat}
-                setImageFormat={setImageFormat}
+                imageFormat={imageFormat as string}
+                setImageFormat={(f) => setImageFormat(f as 'png' | 'jpeg' | 'webp')}
                 onDownload={handleDownload}
               />
             </TabsContent>
@@ -209,15 +177,18 @@ const QrGenerator = () => {
         
         <div className="flex flex-col gap-6">
           <QRPreview 
+            ref={qrRef}
             qrValue={qrValue}
             size={size}
-            fgColor={customPattern} // Use customPattern as fgColor
+            fgColor={customPattern}
             bgColor={bgColor}
             level={level}
             logoImage={logoImage}
             logoScale={logoScale}
             excavate={excavate}
-            // Removed AI props
+            shapeStyle={shapeStyle}
+            borderStyle={borderStyle}
+            centerStyle={centerStyle}
           />
           <QuickTips />
         </div>
