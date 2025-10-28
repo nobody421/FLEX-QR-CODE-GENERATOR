@@ -16,6 +16,7 @@ import { CampaignTracking } from '@/components/qr-generator/CampaignTracking';
 import { ExportOptions } from '@/components/qr-generator/ExportOptions';
 import { SaveQrCode } from '@/components/qr-generator/SaveQrCode';
 import { StyledQrCodeRef } from '@/components/qr-generator/StyledQrCode';
+import { saveQrCodeToGoogleDrive } from '@/utils/google-drive'; // Import utility
 
 const QrGenerator = () => {
   const navigate = useNavigate();
@@ -46,6 +47,8 @@ const QrGenerator = () => {
   const [campaignName, setCampaignName] = useState('');
   const [campaignTerm, setCampaignTerm] = useState('');
   const [campaignContent, setCampaignContent] = useState('');
+
+  const [autoSaveToDrive, setAutoSaveToDrive] = useState(false);
 
   const [saving, setSaving] = useState(false);
 
@@ -103,10 +106,18 @@ const QrGenerator = () => {
           shape_style: shapeStyle,
           border_style: borderStyle,
           center_style: centerStyle,
+          auto_save_to_drive: autoSaveToDrive,
         });
 
       if (error) throw error;
       
+      // --- Google Drive Integration ---
+      if (autoSaveToDrive) {
+        // We pass the ref to the utility function to extract the image data
+        await saveQrCodeToGoogleDrive(qrRef, qrName);
+      }
+      // --------------------------------
+
       showSuccess('QR code saved successfully!');
       navigate('/dashboard');
     } catch (error) {
@@ -179,6 +190,8 @@ const QrGenerator = () => {
                 imageFormat={imageFormat as string}
                 setImageFormat={(f) => setImageFormat(f as 'png' | 'jpeg' | 'webp')}
                 onDownload={handleDownload}
+                autoSaveToDrive={autoSaveToDrive}
+                setAutoSaveToDrive={setAutoSaveToDrive}
               />
             </TabsContent>
           </Tabs>

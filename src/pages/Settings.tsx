@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
-import { Chrome } from 'lucide-react'; // <-- FIX: Changed Google to Chrome
+import { Chrome } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -56,7 +56,14 @@ const Settings = () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin + '/dashboard', // Redirect back to dashboard after sign-in
+        redirectTo: window.location.origin + '/dashboard',
+        // Request necessary scopes for Drive access and offline access for refresh token
+        scopes: 'https://www.googleapis.com/auth/drive.file',
+        skipBrowserRedirect: false,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
       },
     });
 
@@ -124,9 +131,9 @@ const Settings = () => {
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center">
               <div className="space-y-1">
-                <h3 className="font-medium">Google Account</h3>
+                <h3 className="font-medium">Google Account & Drive Access</h3>
                 <p className="text-muted-foreground text-sm">
-                  {isGoogleLinked ? 'Your Google account is linked.' : 'Link your Google account for easy sign-in.'}
+                  {isGoogleLinked ? 'Your Google account is linked.' : 'Link your Google account to enable sign-in and Google Drive saving.'}
                 </p>
               </div>
               <Button 

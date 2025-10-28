@@ -18,6 +18,7 @@ import { CampaignTracking } from '@/components/qr-generator/CampaignTracking';
 import { ExportOptions } from '@/components/qr-generator/ExportOptions';
 import { SaveQrCode } from '@/components/qr-generator/SaveQrCode';
 import { StyledQrCodeRef } from '@/components/qr-generator/StyledQrCode';
+import { saveQrCodeToGoogleDrive } from '@/utils/google-drive'; // Import utility
 
 const QrEditor = () => {
   const { qrCodeId } = useParams<{ qrCodeId: string }>();
@@ -51,6 +52,8 @@ const QrEditor = () => {
   const [campaignTerm, setCampaignTerm] = useState('');
   const [campaignContent, setCampaignContent] = useState('');
 
+  const [autoSaveToDrive, setAutoSaveToDrive] = useState(false);
+
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -81,6 +84,7 @@ const QrEditor = () => {
       setShapeStyle(data.shape_style || 'square');
       setBorderStyle(data.border_style || 'square');
       setCenterStyle(data.center_style || 'square');
+      setAutoSaveToDrive(data.auto_save_to_drive || false);
       
       setColor1(data.color_1 || '#000000');
       if (data.color_2 && data.gradient_type) {
@@ -143,11 +147,19 @@ const QrEditor = () => {
           shape_style: shapeStyle,
           border_style: borderStyle,
           center_style: centerStyle,
+          auto_save_to_drive: autoSaveToDrive,
         })
         .eq('id', qrCodeId);
 
       if (error) throw error;
       
+      // --- Google Drive Integration ---
+      if (autoSaveToDrive) {
+        // We pass the ref to the utility function to extract the image data
+        await saveQrCodeToGoogleDrive(qrRef, qrName);
+      }
+      // --------------------------------
+
       showSuccess('QR code updated successfully!');
       navigate('/dashboard');
     } catch (error) {
@@ -235,6 +247,8 @@ const QrEditor = () => {
                 imageFormat={imageFormat as string}
                 setImageFormat={(f) => setImageFormat(f as 'png' | 'jpeg' | 'webp')}
                 onDownload={handleDownload}
+                autoSaveToDrive={autoSaveToDrive}
+                setAutoSaveToDrive={setAutoSaveToDrive}
               />
             </TabsContent>
           </Tabs>
