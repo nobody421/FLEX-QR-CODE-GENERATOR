@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // <-- FIX: Added missing imports
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +11,6 @@ import { QuickTips } from '@/components/qr-generator/QuickTips';
 import { ContentTypeTabs } from '@/components/qr-generator/ContentTypeTabs';
 import { StyleCustomization } from '@/components/qr-generator/StyleCustomization';
 import { LogoIntegration } from '@/components/qr-generator/LogoIntegration';
-import { AiGenerator } from '@/components/qr-generator/AiGenerator';
 import { CampaignTracking } from '@/components/qr-generator/CampaignTracking';
 import { ExportOptions } from '@/components/qr-generator/ExportOptions';
 import { SaveQrCode } from '@/components/qr-generator/SaveQrCode';
@@ -21,14 +20,14 @@ const QrGenerator = () => {
   
   const [qrValue, setQrValue] = useState('https://www.dyad.sh');
   const [size, setSize] = useState(256);
-  const [fgColor, setFgColor] = useState('#000000');
+  // fgColor state removed
   const [bgColor, setBgColor] = useState('#ffffff');
   const [level, setLevel] = useState<'L' | 'M' | 'Q' | 'H'>('M');
   const [imageFormat, setImageFormat] = useState<'png' | 'jpeg' | 'webp'>('png');
   const [logoImage, setLogoImage] = useState<string | undefined>(undefined);
   const [logoScale, setLogoScale] = useState(0.2);
   const [excavate, setExcavate] = useState(true);
-  const [customPattern, setCustomPattern] = useState('#000000');
+  const [customPattern, setCustomPattern] = useState('#000000'); // Used as module color
   const [qrName, setQrName] = useState('');
   const [scanLimit, setScanLimit] = useState<number | undefined>(undefined);
   
@@ -40,9 +39,6 @@ const QrGenerator = () => {
   const [campaignContent, setCampaignContent] = useState('');
 
   const [activeTab, setActiveTab] = useState('style');
-  const [isGeneratingAiQr, setIsGeneratingAiQr] = useState(false);
-  const [aiQrImageUrl, setAiQrImageUrl] = useState<string | null>(null);
-  const [aiQrError, setAiQrError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [previewMode, setPreviewMode] = useState<'standard' | 'ai'>('standard');
 
@@ -52,24 +48,6 @@ const QrGenerator = () => {
   };
 
   const handleDownload = async () => {
-    if (previewMode === 'ai' && aiQrImageUrl) {
-      try {
-        const response = await fetch(aiQrImageUrl);
-        const blob = await response.blob();
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `ai-flexqr-code-${qrName || 'unnamed'}.png`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-      } catch (error) {
-        console.error("Failed to download AI QR code:", error);
-        showError("Failed to download image.");
-      }
-      return;
-    }
-
     const canvas = document.querySelector('canvas');
     if (canvas) {
       const image = canvas.toDataURL(`image/${imageFormat}`);
@@ -90,29 +68,6 @@ const QrGenerator = () => {
       case 'sms': setQrValue('smsto:'); break;
       case 'wifi': setQrValue('WIFI:T:WPA;S:;P:;;'); break;
       default: setQrValue('');
-    }
-  };
-
-  const handleGenerateAiQr = async (url: string, prompt: string) => {
-    setIsGeneratingAiQr(true);
-    setAiQrImageUrl(null);
-    setAiQrError(null);
-    try {
-      const { data, error } = await supabase.functions.invoke('generate-ai-qr', {
-        body: { qr_data: url, prompt: prompt },
-      });
-      if (error) throw new Error(error.message);
-      if (data.error) throw new Error(data.error);
-      setAiQrImageUrl(data.imageUrl);
-      setPreviewMode('ai');
-      showSuccess("AI QR Code generated successfully!");
-    } catch (err: any) {
-      console.error(err);
-      const errorMessage = err.message || 'An unknown error occurred.';
-      setAiQrError(errorMessage);
-      showError(`Error: ${errorMessage}`);
-    } finally {
-      setIsGeneratingAiQr(false);
     }
   };
 
@@ -169,10 +124,9 @@ const QrGenerator = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <Tabs defaultValue="style" className="w-full" onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="style">Content & Style</TabsTrigger>
               <TabsTrigger value="logo">Logo</TabsTrigger>
-              <TabsTrigger value="ai">AI</TabsTrigger>
               <TabsTrigger value="tracking">Tracking</TabsTrigger>
               <TabsTrigger value="download">Download</TabsTrigger>
             </TabsList>
@@ -190,8 +144,6 @@ const QrGenerator = () => {
               <StyleCustomization 
                 size={size}
                 setSize={setSize}
-                fgColor={fgColor}
-                setFgColor={setFgColor}
                 bgColor={bgColor}
                 setBgColor={setBgColor}
                 customPattern={customPattern}
@@ -216,13 +168,6 @@ const QrGenerator = () => {
                 setExcavate={setExcavate}
               />
             </TabsContent>
-            <TabsContent value="ai" className="mt-6">
-              <AiGenerator 
-                onGenerate={handleGenerateAiQr}
-                isGenerating={isGeneratingAiQr}
-                error={aiQrError}
-              />
-            </TabsContent>
             <TabsContent value="tracking" className="mt-6">
               <CampaignTracking 
                 scanLimit={scanLimit}
@@ -243,7 +188,6 @@ const QrGenerator = () => {
               <ExportOptions 
                 imageFormat={imageFormat}
                 setImageFormat={setImageFormat}
-                previewMode={previewMode}
                 onDownload={handleDownload}
               />
             </TabsContent>
@@ -254,16 +198,13 @@ const QrGenerator = () => {
           <QRPreview 
             qrValue={qrValue}
             size={size}
-            fgColor={fgColor}
+            fgColor={customPattern} // Use customPattern as fgColor
             bgColor={bgColor}
             level={level}
             logoImage={logoImage}
             logoScale={logoScale}
             excavate={excavate}
-            previewMode={previewMode}
-            isGeneratingAiQr={isGeneratingAiQr}
-            aiQrImageUrl={aiQrImageUrl}
-            setPreviewMode={setPreviewMode}
+            // Removed AI props
           />
           <QuickTips />
         </div>

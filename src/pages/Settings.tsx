@@ -1,12 +1,73 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
+import { Chrome } from 'lucide-react'; // <-- FIX: Changed Google to Chrome
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+// Utility function to manage theme (assuming a simple class-based theme)
+const setAppTheme = (theme: string) => {
+  const root = window.document.documentElement;
+  root.classList.remove('light', 'dark');
+  if (theme === 'system') {
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    root.classList.add(systemTheme);
+  } else {
+    root.classList.add(theme);
+  }
+  localStorage.setItem('theme', theme);
+};
+
+const getInitialTheme = () => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('theme') || 'system';
+  }
+  return 'system';
+};
 
 const Settings = () => {
+  const [currentTheme, setCurrentTheme] = useState(getInitialTheme());
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    fetchUser();
+    setAppTheme(getInitialTheme()); // Apply theme on load
+  }, []);
+
+  const handleThemeChange = (theme: string) => {
+    setCurrentTheme(theme);
+    setAppTheme(theme);
+  };
+
+  const handleGoogleSignIn = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin + '/dashboard', // Redirect back to dashboard after sign-in
+      },
+    });
+
+    if (error) {
+      console.error('Google sign-in error:', error);
+      showError('Failed to link Google account: ' + error.message);
+    }
+  };
+
+  const isGoogleLinked = user?.app_metadata?.providers?.includes('google');
+
   const handleExportData = async () => {
     try {
       // Get all QR codes for the user
@@ -54,23 +115,58 @@ const Settings = () => {
       <h1 className="text-3xl font-bold mb-6">Settings</h1>
       
       <div className="grid grid-cols-1 gap-6">
+        
+        {/* Google Account Linking */}
         <Card>
           <CardHeader>
-            <CardTitle>Account Settings</CardTitle>
+            <CardTitle>Account Linking</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div className="space-y-1">
+                <h3 className="font-medium">Google Account</h3>
+                <p className="text-muted-foreground text-sm">
+                  {isGoogleLinked ? 'Your Google account is linked.' : 'Link your Google account for easy sign-in.'}
+                </p>
+              </div>
+              <Button 
+                onClick={handleGoogleSignIn} 
+                variant={isGoogleLinked ? 'secondary' : 'default'}
+                disabled={isGoogleLinked}
+              >
+                <Chrome className="h-4 w-4 mr-2" />
+                {isGoogleLinked ? 'Linked' : 'Link Account'}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Theme Customization */}
+        <Card>
+          <CardHeader>
+            <CardTitle>App Customization</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="user@example.com" />
+              <Label>App Theme</Label>
+              <Select onValueChange={handleThemeChange} defaultValue={currentTheme}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select Theme" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Choose how the application looks.
+              </p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" placeholder="Your name" />
-            </div>
-            <Button>Update Profile</Button>
           </CardContent>
         </Card>
-        
+
+        {/* Data Export */}
         <Card>
           <CardHeader>
             <CardTitle>Data Export</CardTitle>
@@ -83,6 +179,7 @@ const Settings = () => {
           </CardContent>
         </Card>
         
+        {/* Danger Zone */}
         <Card>
           <CardHeader>
             <CardTitle>Danger Zone</CardTitle>

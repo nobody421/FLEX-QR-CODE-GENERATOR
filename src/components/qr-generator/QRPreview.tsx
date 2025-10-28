@@ -1,8 +1,7 @@
 import React, { useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { QRCodeCanvas } from 'qrcode.react';
-import { Eye, Loader2, Sparkles } from 'lucide-react';
+import { Eye } from 'lucide-react';
 
 interface QRPreviewProps {
   qrValue: string;
@@ -13,10 +12,7 @@ interface QRPreviewProps {
   logoImage?: string;
   logoScale: number;
   excavate: boolean;
-  previewMode: 'standard' | 'ai';
-  isGeneratingAiQr: boolean;
-  aiQrImageUrl: string | null;
-  setPreviewMode: (mode: 'standard' | 'ai') => void;
+  // Removed AI-related props: previewMode, isGeneratingAiQr, aiQrImageUrl, setPreviewMode
 }
 
 export const QRPreview: React.FC<QRPreviewProps> = ({
@@ -28,10 +24,6 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
   logoImage,
   logoScale,
   excavate,
-  previewMode,
-  isGeneratingAiQr,
-  aiQrImageUrl,
-  setPreviewMode
 }) => {
   const qrRef = useRef<HTMLDivElement>(null);
   
@@ -52,57 +44,19 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
       </CardHeader>
       <CardContent>
         <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 rounded-lg p-6 min-h-[400px]">
-          {previewMode === 'ai' ? (
-            <>
-              {isGeneratingAiQr && (
-                <div className="flex flex-col items-center gap-4">
-                  <Loader2 className="h-16 w-16 animate-spin text-primary" />
-                  <p className="text-muted-foreground">Generating your masterpiece...</p>
-                </div>
-              )}
-              {!isGeneratingAiQr && aiQrImageUrl && (
-                <img 
-                  src={aiQrImageUrl} 
-                  alt="AI Generated QR Code" 
-                  className="w-full max-w-[300px] rounded-lg shadow-lg" 
-                />
-              )}
-              {!isGeneratingAiQr && !aiQrImageUrl && (
-                <div className="text-center text-gray-500">
-                  <Sparkles className="mx-auto h-12 w-12 mb-4" />
-                  <p>Your generated AI QR code will appear here.</p>
-                </div>
-              )}
-            </>
-          ) : (
-            <div ref={qrRef} className="bg-white p-4 rounded-lg shadow-lg">
-              <QRCodeCanvas 
-                value={qrValue} 
-                size={size > 300 ? 300 : size} 
-                fgColor={fgColor} 
-                bgColor={bgColor} 
-                level={level} 
-                imageSettings={imageSettings} 
-              />
-            </div>
-          )}
+          <div ref={qrRef} className="bg-white p-4 rounded-lg shadow-lg">
+            <QRCodeCanvas 
+              value={qrValue} 
+              size={size > 300 ? 300 : size} 
+              fgColor={fgColor} 
+              bgColor={bgColor} 
+              level={level} 
+              imageSettings={imageSettings} 
+            />
+          </div>
           
-          <div className="flex gap-2 mt-4">
-            <Button 
-              variant={previewMode === 'standard' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setPreviewMode('standard')}
-            >
-              Standard
-            </Button>
-            <Button 
-              variant={previewMode === 'ai' ? 'default' : 'outline'} 
-              size="sm"
-              onClick={() => setPreviewMode('ai')}
-              disabled={!aiQrImageUrl}
-            >
-              AI Version
-            </Button>
+          <div className="text-center text-gray-500 mt-4">
+            <p className="text-sm">Standard QR Code</p>
           </div>
         </div>
       </CardContent>

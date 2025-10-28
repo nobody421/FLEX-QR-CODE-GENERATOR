@@ -15,8 +15,6 @@ import {
 interface StyleCustomizationProps {
   size: number;
   setSize: (size: number) => void;
-  fgColor: string;
-  setFgColor: (color: string) => void;
   bgColor: string;
   setBgColor: (color: string) => void;
   customPattern: string;
@@ -25,11 +23,17 @@ interface StyleCustomizationProps {
   setLevel: (level: 'L' | 'M' | 'Q' | 'H') => void;
 }
 
+const colorPresets = [
+  { name: 'Black', value: '#000000' },
+  { name: 'Primary Blue', value: '#3b82f6' },
+  { name: 'Forest Green', value: '#10b981' },
+  { name: 'Crimson Red', value: '#ef4444' },
+  { name: 'Deep Purple', value: '#8b5cf6' },
+];
+
 export const StyleCustomization: React.FC<StyleCustomizationProps> = ({
   size,
   setSize,
-  fgColor,
-  setFgColor,
   bgColor,
   setBgColor,
   customPattern,
@@ -54,21 +58,32 @@ export const StyleCustomization: React.FC<StyleCustomizationProps> = ({
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label>Foreground Color</Label>
+            <Label>Module Color (Pattern)</Label>
             <div className="flex items-center gap-2">
               <Input 
                 type="color" 
-                value={fgColor} 
-                onChange={(e) => setFgColor(e.target.value)} 
+                value={customPattern} 
+                onChange={(e) => setCustomPattern(e.target.value)} 
                 className="p-1 h-10 w-full" 
               />
               <Input 
                 type="text" 
-                value={fgColor} 
-                onChange={(e) => setFgColor(e.target.value)} 
+                value={customPattern} 
+                onChange={(e) => setCustomPattern(e.target.value)} 
                 placeholder="#000000" 
                 className="w-24" 
               />
+            </div>
+            <div className="flex gap-2 mt-2">
+              {colorPresets.map(preset => (
+                <div
+                  key={preset.value}
+                  className={`w-6 h-6 rounded-full cursor-pointer border-2 ${customPattern === preset.value ? 'border-primary ring-2 ring-primary/50' : 'border-gray-300'}`}
+                  style={{ backgroundColor: preset.value }}
+                  onClick={() => setCustomPattern(preset.value)}
+                  title={preset.name}
+                />
+              ))}
             </div>
           </div>
           
@@ -92,41 +107,19 @@ export const StyleCustomization: React.FC<StyleCustomizationProps> = ({
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label>Custom Pattern Color</Label>
-            <div className="flex items-center gap-2">
-              <Palette className="h-5 w-5" />
-              <Input 
-                type="color" 
-                value={customPattern} 
-                onChange={(e) => setCustomPattern(e.target.value)} 
-                className="p-1 h-10 w-full" 
-              />
-              <Input 
-                type="text" 
-                value={customPattern} 
-                onChange={(e) => setCustomPattern(e.target.value)} 
-                placeholder="#000000" 
-                className="w-24" 
-              />
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Error Correction Level</Label>
-            <Select onValueChange={(v: 'L'|'M'|'Q'|'H') => setLevel(v)} defaultValue={level}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="L">Low (7%)</SelectItem>
-                <SelectItem value="M">Medium (15%)</SelectItem>
-                <SelectItem value="Q">Quartile (25%)</SelectItem>
-                <SelectItem value="H">High (30%)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="space-y-2">
+          <Label>Error Correction Level</Label>
+          <Select onValueChange={(v: 'L'|'M'|'Q'|'H') => setLevel(v)} defaultValue={level}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="L">Low (7%)</SelectItem>
+              <SelectItem value="M">Medium (15%)</SelectItem>
+              <SelectItem value="Q">Quartile (25%)</SelectItem>
+              <SelectItem value="H">High (30%)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </CardContent>
     </Card>

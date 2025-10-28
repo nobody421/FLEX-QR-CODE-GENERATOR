@@ -1,6 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -12,14 +13,13 @@ import {
 interface ExportOptionsProps {
   imageFormat: string;
   setImageFormat: (format: 'png' | 'jpeg' | 'webp') => void;
-  previewMode: 'standard' | 'ai';
+  // Removed previewMode prop
   onDownload: () => void;
 }
 
 export const ExportOptions: React.FC<ExportOptionsProps> = ({
   imageFormat,
   setImageFormat,
-  previewMode,
   onDownload
 }) => {
   return (
@@ -31,7 +31,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
           <Select 
             onValueChange={(v: 'png'|'jpeg'|'webp') => setImageFormat(v)} 
             defaultValue={imageFormat}
-            disabled={previewMode === 'ai'}
+            // Removed disabled logic based on previewMode
           >
             <SelectTrigger>
               <SelectValue />
@@ -42,9 +42,6 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
               <SelectItem value="webp">WebP</SelectItem>
             </SelectContent>
           </Select>
-          {previewMode === 'ai' && (
-            <p className="text-xs text-muted-foreground">AI QR codes are downloaded as PNGs.</p>
-          )}
         </div>
         <Button onClick={onDownload} className="w-full">
           Download QR Code
