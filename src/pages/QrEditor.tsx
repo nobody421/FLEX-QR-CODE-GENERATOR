@@ -107,7 +107,7 @@ const QrEditor = () => {
       if (campaignSource || campaignMedium || campaignName || campaignTerm || campaignContent) {
         const url = new URL(qrValue);
         if (campaignSource) url.searchParams.set('utm_source', campaignSource);
-        if (campaignMedium) url.searchparams.set('utm_medium', campaignMedium);
+        if (campaignMedium) url.searchParams.set('utm_medium', campaignMedium);
         if (campaignName) url.searchParams.set('utm_campaign', campaignName);
         if (campaignTerm) url.searchParams.set('utm_term', campaignTerm);
         if (campaignContent) url.searchParams.set('utm_content', campaignContent);

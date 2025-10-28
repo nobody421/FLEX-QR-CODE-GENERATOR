@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
-import { Square, Circle, Star, Zap, Plus, Minus, Check } from 'lucide-react';
+import { Square, Circle, Star, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Select,
@@ -23,7 +23,6 @@ interface StyleCustomizationProps {
   level: 'L' | 'M' | 'Q' | 'H';
   setLevel: (level: 'L' | 'M' | 'Q' | 'H') => void;
   
-  // New Style Props
   shapeStyle: string;
   setShapeStyle: (style: string) => void;
   borderStyle: string;
@@ -40,7 +39,6 @@ const colorPresets = [
   { name: 'Deep Purple', value: '#8b5cf6' },
 ];
 
-// Helper component for style selection buttons
 const StyleButton: React.FC<{
   styleKey: string;
   currentStyle: string;
@@ -85,7 +83,6 @@ export const StyleCustomization: React.FC<StyleCustomizationProps> = ({
       <CardHeader><CardTitle>Style Customization</CardTitle></CardHeader>
       <CardContent className="space-y-6">
         
-        {/* --- Shape Style (Data Modules) --- */}
         <div className="space-y-3">
           <h3 className="font-medium">Shape Style</h3>
           <div className="flex flex-wrap gap-3">
@@ -96,20 +93,19 @@ export const StyleCustomization: React.FC<StyleCustomizationProps> = ({
               <div className="h-6 w-6 rounded-md border-2 border-current" />
             </StyleButton>
             <StyleButton styleKey="dots" currentStyle={shapeStyle} onClick={setShapeStyle}>
-              <div className="flex flex-col gap-1">
-                <div className="h-1 w-4 bg-current" />
-                <div className="h-1 w-4 bg-current" />
-                <div className="h-1 w-4 bg-current" />
+               <div className="grid grid-cols-2 gap-1 p-1">
+                <Circle className="h-2 w-2 fill-current" />
+                <Circle className="h-2 w-2 fill-current" />
+                <Circle className="h-2 w-2 fill-current" />
+                <Circle className="h-2 w-2 fill-current" />
               </div>
             </StyleButton>
             <StyleButton styleKey="extra-rounded" currentStyle={shapeStyle} onClick={setShapeStyle}>
               <Circle className="h-6 w-6" />
             </StyleButton>
-            {/* Add more styles as placeholders */}
           </div>
         </div>
 
-        {/* --- Border Style (Finder Pattern) --- */}
         <div className="space-y-3">
           <h3 className="font-medium">Border Style</h3>
           <div className="flex flex-wrap gap-3">
@@ -122,11 +118,9 @@ export const StyleCustomization: React.FC<StyleCustomizationProps> = ({
             <StyleButton styleKey="circle" currentStyle={borderStyle} onClick={setBorderStyle}>
               <Circle className="h-6 w-6" />
             </StyleButton>
-            {/* Add more styles as placeholders */}
           </div>
         </div>
 
-        {/* --- Center Style (Finder Center) --- */}
         <div className="space-y-3">
           <h3 className="font-medium">Center Style</h3>
           <div className="flex flex-wrap gap-3">
@@ -136,13 +130,9 @@ export const StyleCustomization: React.FC<StyleCustomizationProps> = ({
             <StyleButton styleKey="rounded" currentStyle={centerStyle} onClick={setCenterStyle}>
               <div className="h-6 w-6 rounded-md bg-current" />
             </StyleButton>
-            <StyleButton styleKey="star" currentStyle={centerStyle} onClick={setCenterStyle}>
-              <Star className="h-6 w-6 fill-current" />
+            <StyleButton styleKey="circle" currentStyle={centerStyle} onClick={setCenterStyle}>
+              <Circle className="h-6 w-6 fill-current" />
             </StyleButton>
-            <StyleButton styleKey="zap" currentStyle={centerStyle} onClick={setCenterStyle}>
-              <Zap className="h-6 w-6 fill-current" />
-            </StyleButton>
-            {/* Add more styles as placeholders */}
           </div>
         </div>
 

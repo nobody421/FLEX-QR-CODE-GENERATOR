@@ -43,8 +43,7 @@ const mapCornerStyle = (style: string) => {
 const mapCenterStyle = (style: string) => {
   switch (style) {
     case 'rounded': return 'extra-rounded';
-    case 'star': return 'dot';
-    case 'zap': return 'dot';
+    case 'circle': return 'dot';
     case 'square':
     default:
       return 'square';
